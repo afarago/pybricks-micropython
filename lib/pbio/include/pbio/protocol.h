@@ -24,7 +24,7 @@
 #define PBIO_PROTOCOL_VERSION_MAJOR 1
 
 /** The minor version number for the protocol. */
-#define PBIO_PROTOCOL_VERSION_MINOR 3
+#define PBIO_PROTOCOL_VERSION_MINOR 4
 
 /** The patch version number for the protocol. */
 #define PBIO_PROTOCOL_VERSION_PATCH 0
@@ -203,6 +203,15 @@ typedef enum {
      * @since Pybricks Profile v1.3.0
      */
     PBIO_PYBRICKS_EVENT_WRITE_STDOUT = 1,
+
+    /**
+     * Data written to app data.
+     *
+     * The payload is a variable number of bytes that was written to app data.
+     *
+     * @since Pybricks Profile v1.4.0
+     */
+    PBIO_PYBRICKS_EVENT_WRITE_APP_DATA = 2,
 } pbio_pybricks_event_t;
 
 /**
