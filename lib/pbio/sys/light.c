@@ -16,6 +16,7 @@
 #include <pbio/util.h>
 #include <pbsys/config.h>
 #include <pbsys/status.h>
+#include <pbsys/storage.h>
 
 #include "../src/light/color_light.h"
 
@@ -25,10 +26,6 @@ typedef enum {
     PBSYS_STATUS_LIGHT_INDICATION_NONE,
     PBSYS_STATUS_LIGHT_INDICATION_HIGH_CURRENT,
     PBSYS_STATUS_LIGHT_INDICATION_LOW_VOLTAGE,
-    PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING,
-    PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING_AND_LOW_VOLTAGE,
-    PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL,
-    PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL_AND_LOW_VOLTAGE,
     PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN_REQUESTED,
     PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN,
 } pbsys_status_light_indication_t;
@@ -61,6 +58,10 @@ typedef struct {
 // so that we don't have the light off at the beginning of the pattern.
 static const pbsys_status_light_indication_pattern_element_t *const
 pbsys_status_light_indication_pattern[] = {
+    [PBSYS_STATUS_LIGHT_INDICATION_NONE] =
+        (const pbsys_status_light_indication_pattern_element_t[]) {
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_BLACK),
+    },
     [PBSYS_STATUS_LIGHT_INDICATION_HIGH_CURRENT] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
         { .color = PBIO_COLOR_ORANGE, .duration = 1 },
@@ -80,40 +81,6 @@ pbsys_status_light_indication_pattern[] = {
         { .color = PBIO_COLOR_BLACK, .duration = 4 },
         { .color = PBIO_COLOR_NONE, .duration = 16 },
         { .color = PBIO_COLOR_BLACK, .duration = 4 },
-        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
-    },
-    [PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING] =
-        (const pbsys_status_light_indication_pattern_element_t[]) {
-        { .color = PBIO_COLOR_BLUE, .duration = 1 },
-        { .color = PBIO_COLOR_BLACK, .duration = 2 },
-        { .color = PBIO_COLOR_BLUE, .duration = 1 },
-        { .color = PBIO_COLOR_BLACK, .duration = 22 },
-        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
-    },
-    [PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING_AND_LOW_VOLTAGE] =
-        (const pbsys_status_light_indication_pattern_element_t[]) {
-        { .color = PBIO_COLOR_ORANGE, .duration = 1 },
-        { .color = PBIO_COLOR_BLACK, .duration = 2 },
-        { .color = PBIO_COLOR_ORANGE, .duration = 1 },
-        { .color = PBIO_COLOR_BLACK, .duration = 22 },
-        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
-    },
-    [PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL] =
-        (const pbsys_status_light_indication_pattern_element_t[]) {
-        { .color = PBIO_COLOR_NONE, .duration = 8 },
-        { .color = PBIO_COLOR_WHITE, .duration = 1 },
-        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
-    },
-    [PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL_AND_LOW_VOLTAGE] =
-        (const pbsys_status_light_indication_pattern_element_t[]) {
-        { .color = PBIO_COLOR_NONE, .duration = 8 },
-        { .color = PBIO_COLOR_BLACK, .duration = 4 },
-        { .color = PBIO_COLOR_ORANGE, .duration = 6 },
-        { .color = PBIO_COLOR_BLACK, .duration = 8 },
-        { .color = PBIO_COLOR_ORANGE, .duration = 6 },
-        { .color = PBIO_COLOR_BLACK, .duration = 4 },
-        { .color = PBIO_COLOR_NONE, .duration = 8 },
-        { .color = PBIO_COLOR_WHITE, .duration = 1 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
     [PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN_REQUESTED] =
@@ -179,8 +146,6 @@ void pbsys_status_light_init(void) {
 static void pbsys_status_light_handle_status_change(void) {
     pbsys_status_light_pattern_state_t *state = &pbsys_status_light_instance.pattern_state;
     pbsys_status_light_indication_t new_indication = PBSYS_STATUS_LIGHT_INDICATION_NONE;
-    bool ble_advertising = pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
-    bool ble_low_signal = pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_LOW_SIGNAL);
     bool low_voltage = pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
     bool high_current = pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_HIGH_CURRENT);
     bool shutdown_requested = pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
@@ -191,16 +156,8 @@ static void pbsys_status_light_handle_status_change(void) {
         new_indication = PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN;
     } else if (shutdown_requested) {
         new_indication = PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN_REQUESTED;
-    } else if (ble_advertising && low_voltage) {
-        new_indication = PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING_AND_LOW_VOLTAGE;
-    } else if (ble_advertising) {
-        new_indication = PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING;
     } else if (high_current) {
         new_indication = PBSYS_STATUS_LIGHT_INDICATION_HIGH_CURRENT;
-    } else if (ble_low_signal && low_voltage) {
-        new_indication = PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL_AND_LOW_VOLTAGE;
-    } else if (ble_low_signal) {
-        new_indication = PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL;
     } else if (low_voltage) {
         new_indication = PBSYS_STATUS_LIGHT_INDICATION_LOW_VOLTAGE;
     }
@@ -292,6 +249,8 @@ typedef enum {
     PBSYS_BATTERY_LIGHT_OVERCHARGE,
     /** There is a problem with the battery or charger. */
     PBSYS_BATTERY_LIGHT_FAULT,
+    /** Battery voltage is low. */
+    PBSYS_BATTERY_LIGHT_LOW_VOLTAGE,
 } pbsys_battery_light_state_t;
 
 static pbsys_status_light_pattern_state_t pbsys_battery_light_pattern_state;
@@ -318,6 +277,10 @@ pbsys_battery_light_patterns[] = {
         { .color = PBIO_COLOR_BLACK, .duration = 10 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
+    [PBSYS_BATTERY_LIGHT_LOW_VOLTAGE] =
+        (const pbsys_status_light_indication_pattern_element_t[]) {
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_YELLOW)
+    },
 };
 
 pbsys_battery_light_state_t pbsys_battery_light_get_state(void) {
@@ -333,13 +296,114 @@ pbsys_battery_light_state_t pbsys_battery_light_get_state(void) {
         case PBDRV_CHARGER_STATUS_FAULT:
             return PBSYS_BATTERY_LIGHT_FAULT;
         default:
+            if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_WARNING)) {
+                return PBSYS_BATTERY_LIGHT_LOW_VOLTAGE;
+            }
+
             return PBSYS_BATTERY_LIGHT_DISCHARGING;
     }
 }
 
 #endif // PBSYS_CONFIG_STATUS_LIGHT_BATTERY
 
-void pbsys_status_light_poll(void) {
+#endif // PBSYS_CONFIG_STATUS_LIGHT
+
+#if PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH
+typedef enum {
+    PBSYS_BLUETOOTH_LIGHT_INDICATOR_DISABLED,
+    PBSYS_BLUETOOTH_LIGHT_INDICATOR_BLE_ADVERTISING,
+    PBSYS_BLUETOOTH_LIGHT_INDICATOR_BLE_CONNECTED,
+    PBSYS_BLUETOOTH_LIGHT_INDICATOR_BLE_LOW_SIGNAL_AND_CONNECTED,
+    PBSYS_BLUETOOTH_LIGHT_INDICATOR_SHUTDOWN,
+} pbsys_bluetooth_light_state_t;
+
+static pbsys_status_light_pattern_state_t pbsys_bluetooth_light_pattern_state;
+
+static const pbsys_status_light_indication_pattern_element_t *const
+pbsys_bluetooth_light_patterns[] = {
+    [PBSYS_BLUETOOTH_LIGHT_INDICATOR_BLE_CONNECTED] =
+        (const pbsys_status_light_indication_pattern_element_t[]) {
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_BLUE),
+    },
+    [PBSYS_BLUETOOTH_LIGHT_INDICATOR_DISABLED] =
+        (const pbsys_status_light_indication_pattern_element_t[]) {
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_RED),
+    },
+    [PBSYS_BLUETOOTH_LIGHT_INDICATOR_BLE_ADVERTISING] =
+        (const pbsys_status_light_indication_pattern_element_t[]) {
+        { .color = PBIO_COLOR_BLUE, .duration = 1 },
+        { .color = PBIO_COLOR_BLACK, .duration = 2 },
+        { .color = PBIO_COLOR_BLUE, .duration = 1 },
+        { .color = PBIO_COLOR_BLACK, .duration = 22 },
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
+    },
+    [PBSYS_BLUETOOTH_LIGHT_INDICATOR_BLE_LOW_SIGNAL_AND_CONNECTED] =
+        (const pbsys_status_light_indication_pattern_element_t[]) {
+        { .color = PBIO_COLOR_BLUE, .duration = 8 },
+        { .color = PBIO_COLOR_YELLOW, .duration = 1 },
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
+    },
+    [PBSYS_BLUETOOTH_LIGHT_INDICATOR_SHUTDOWN] =
+        (const pbsys_status_light_indication_pattern_element_t[]) {
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_BLACK),
+    },
+};
+
+static void pbsys_bluetooth_light_handle_status_change(void) {
+    pbsys_status_light_pattern_state_t *state = &pbsys_bluetooth_light_pattern_state;
+    pbsys_bluetooth_light_state_t new_indication = PBSYS_BLUETOOTH_LIGHT_INDICATOR_BLE_CONNECTED;
+    bool ble_advertising = pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
+    bool ble_low_signal = pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_LOW_SIGNAL);
+    bool ble_disabled = !pbsys_storage_settings_bluetooth_enabled();
+    bool shutdown = pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN);
+
+    // This determines which indication has the highest precedence.
+    if (shutdown) {
+        new_indication = PBSYS_BLUETOOTH_LIGHT_INDICATOR_SHUTDOWN;
+    } else if (ble_advertising) {
+        new_indication = PBSYS_BLUETOOTH_LIGHT_INDICATOR_BLE_ADVERTISING;
+    } else if (ble_low_signal) {
+        new_indication = PBSYS_BLUETOOTH_LIGHT_INDICATOR_BLE_LOW_SIGNAL_AND_CONNECTED;
+    } else if (ble_disabled) {
+        new_indication = PBSYS_BLUETOOTH_LIGHT_INDICATOR_DISABLED;
+    }
+
+    // if the indication changed, then reset the indication pattern to the beginning
+    if (state->indication != new_indication) {
+        state->indication = new_indication;
+        state->pattern_index = state->pattern_count = 0;
+    }
+}
+
+//TODO: pressing the BT button should disconnect the BT when not in user mode
+
+void pbsys_status_light_bluetooth_set_color(pbio_color_t color) {
+    pbdrv_led_dev_t *led;
+    // FIXME: Bluetooth light is currently hard-coded to id 2 on all platforms
+    if (pbdrv_led_get_dev(2, &led) == PBIO_SUCCESS) {
+        pbio_color_hsv_t hsv;
+        pbio_color_to_hsv(color, &hsv);
+        pbdrv_led_set_hsv(led, &hsv);
+    }
+}
+
+void pbsys_status_light_bluetooth_deinit(void) {
+    pbsys_status_light_bluetooth_set_color(PBIO_COLOR_NONE);
+}
+
+void pbsys_bluetooth_light_poll(void) {
+    pbsys_bluetooth_light_handle_status_change();
+
+    pbio_color_t new_color = pbsys_status_light_pattern_next(
+        &pbsys_bluetooth_light_pattern_state, pbsys_bluetooth_light_patterns);
+
+    pbsys_status_light_bluetooth_set_color(new_color);
+}
+#endif
+
+void pbsys_light_poll(void) {
+
+    #ifdef PBSYS_CONFIG_STATUS_LIGHT
     pbsys_status_light_t *instance = &pbsys_status_light_instance;
 
     pbio_color_t new_color = pbsys_status_light_pattern_next(
@@ -367,6 +431,7 @@ void pbsys_status_light_poll(void) {
             pbdrv_led_set_hsv(led, &hsv);
         }
     }
+    #endif // PBSYS_CONFIG_STATUS_LIGHT
 
     // REVISIT: We should be able to make updating the state event driven instead of polled.
     #if PBSYS_CONFIG_STATUS_LIGHT_BATTERY
@@ -389,22 +454,9 @@ void pbsys_status_light_poll(void) {
     }
 
     #endif // PBSYS_CONFIG_STATUS_LIGHT_BATTERY
-}
 
-#endif // PBSYS_CONFIG_STATUS_LIGHT
-
-#if PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH
-void pbsys_status_light_bluetooth_set_color(pbio_color_t color) {
-    pbdrv_led_dev_t *led;
-    // FIXME: Bluetooth light is currently hard-coded to id 2 on all platforms
-    if (pbdrv_led_get_dev(2, &led) == PBIO_SUCCESS) {
-        pbio_color_hsv_t hsv;
-        pbio_color_to_hsv(color, &hsv);
-        pbdrv_led_set_hsv(led, &hsv);
-    }
+    // REVISIT: We should be able to make updating the state event driven instead of polled.
+    #if PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH
+    pbsys_bluetooth_light_poll();
+    #endif // PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH
 }
-
-void pbsys_status_light_bluetooth_deinit(void) {
-    pbsys_status_light_bluetooth_set_color(PBIO_COLOR_NONE);
-}
-#endif

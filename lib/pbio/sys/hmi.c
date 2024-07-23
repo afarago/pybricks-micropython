@@ -143,5 +143,5 @@ void pbsys_hmi_poll(void) {
         #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
     }
 
-    pbsys_status_light_poll();
+    pbsys_light_poll();
 }

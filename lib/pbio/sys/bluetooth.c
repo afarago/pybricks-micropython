@@ -303,9 +303,9 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
 
         // Show inactive status only if user requested Bluetooth as disabled to
         // avoid always flashing red in between program runs when disconnected.
-        if (!pbsys_storage_settings_bluetooth_enabled()) {
-            pbsys_status_light_bluetooth_set_color(PBIO_COLOR_RED);
-        }
+        //!! if (!pbsys_storage_settings_bluetooth_enabled()) {
+        //     pbsys_status_light_bluetooth_set_color(PBIO_COLOR_RED);
+        // }
 
         // make sure the Bluetooth chip is in reset long enough to actually reset
         etimer_set(&timer, 150);
@@ -318,7 +318,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
         }
 
         // Enable Bluetooth, and show on Bluetooth light if available.
-        pbsys_status_light_bluetooth_set_color(PBIO_COLOR_BLUE);
+        //!! pbsys_status_light_bluetooth_set_color(PBIO_COLOR_BLUE);
         pbdrv_bluetooth_power_on(true);
         PROCESS_WAIT_UNTIL(pbdrv_bluetooth_is_ready());
 
