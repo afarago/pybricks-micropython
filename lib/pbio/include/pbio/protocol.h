@@ -241,6 +241,10 @@ typedef enum {
      * @since Pybricks Profile v1.2.0
      */
     PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST = 8,
+
+    // !!!
+    PBIO_PYBRICKS_STATUS_BATTERY_OK_VOLTAGE = 9,
+
     /** Total number of indications. */
     NUM_PBIO_PYBRICKS_STATUS,
 } pbio_pybricks_status_t;

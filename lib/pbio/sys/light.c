@@ -251,6 +251,8 @@ typedef enum {
     PBSYS_BATTERY_LIGHT_FAULT,
     /** Battery voltage is low. */
     PBSYS_BATTERY_LIGHT_LOW_VOLTAGE,
+    /** Battery voltage is OK. */
+    PBSYS_BATTERY_LIGHT_OK_VOLTAGE,
 } pbsys_battery_light_state_t;
 
 static pbsys_status_light_pattern_state_t pbsys_battery_light_pattern_state;
@@ -279,6 +281,10 @@ pbsys_battery_light_patterns[] = {
     },
     [PBSYS_BATTERY_LIGHT_LOW_VOLTAGE] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_RED)
+    },
+    [PBSYS_BATTERY_LIGHT_OK_VOLTAGE] =
+        (const pbsys_status_light_indication_pattern_element_t[]) {
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_YELLOW)
     },
 };
@@ -298,6 +304,8 @@ pbsys_battery_light_state_t pbsys_battery_light_get_state(void) {
         default:
             if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_WARNING)) {
                 return PBSYS_BATTERY_LIGHT_LOW_VOLTAGE;
+            } else if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_OK_VOLTAGE)) {
+                return PBSYS_BATTERY_LIGHT_OK_VOLTAGE;
             }
 
             return PBSYS_BATTERY_LIGHT_DISCHARGING;
