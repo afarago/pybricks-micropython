@@ -7,6 +7,7 @@
 
 #include <contiki.h>
 
+#include <pbdrv/bluetooth.h>
 #include <pbdrv/charger.h>
 #include <pbdrv/led.h>
 #include <pbio/color.h>
@@ -318,6 +319,7 @@ pbsys_battery_light_state_t pbsys_battery_light_get_state(void) {
 
 #if PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH
 typedef enum {
+    PBSYS_BLUETOOTH_LIGHT_INDICATOR_NONE,
     PBSYS_BLUETOOTH_LIGHT_INDICATOR_DISABLED,
     PBSYS_BLUETOOTH_LIGHT_INDICATOR_BLE_ADVERTISING,
     PBSYS_BLUETOOTH_LIGHT_INDICATOR_BLE_CONNECTED,
@@ -329,6 +331,10 @@ static pbsys_status_light_pattern_state_t pbsys_bluetooth_light_pattern_state;
 
 static const pbsys_status_light_indication_pattern_element_t *const
 pbsys_bluetooth_light_patterns[] = {
+    [PBSYS_BLUETOOTH_LIGHT_INDICATOR_NONE] =
+        (const pbsys_status_light_indication_pattern_element_t[]) {
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_BLACK),
+    },
     [PBSYS_BLUETOOTH_LIGHT_INDICATOR_BLE_CONNECTED] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_BLUE),
@@ -359,8 +365,9 @@ pbsys_bluetooth_light_patterns[] = {
 
 static void pbsys_bluetooth_light_handle_status_change(void) {
     pbsys_status_light_pattern_state_t *state = &pbsys_bluetooth_light_pattern_state;
-    pbsys_bluetooth_light_state_t new_indication = PBSYS_BLUETOOTH_LIGHT_INDICATOR_BLE_CONNECTED;
+    pbsys_bluetooth_light_state_t new_indication = PBSYS_BLUETOOTH_LIGHT_INDICATOR_NONE;
     bool ble_advertising = pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
+    bool ble_connected = pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS);
     bool ble_low_signal = pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_LOW_SIGNAL);
     bool ble_disabled = !pbsys_storage_settings_bluetooth_enabled();
     bool shutdown = pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN);
@@ -374,6 +381,8 @@ static void pbsys_bluetooth_light_handle_status_change(void) {
         new_indication = PBSYS_BLUETOOTH_LIGHT_INDICATOR_BLE_LOW_SIGNAL_AND_CONNECTED;
     } else if (ble_disabled) {
         new_indication = PBSYS_BLUETOOTH_LIGHT_INDICATOR_DISABLED;
+    } else if (ble_connected) {
+        new_indication = PBSYS_BLUETOOTH_LIGHT_INDICATOR_BLE_CONNECTED;
     }
 
     // if the indication changed, then reset the indication pattern to the beginning
