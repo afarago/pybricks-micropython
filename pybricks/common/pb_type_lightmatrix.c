@@ -202,7 +202,7 @@ void pb_type_LightMatrix_display_number(pbio_light_matrix_t *light_matrix, mp_ob
     uint8_t composite[5];
     for (uint8_t i = 0; i < 5; i++) {
         if (number < 10) {
-            composite[i] = pb_digits_5x3[number][i] << (negative ? 0 : 1);
+            composite[i] = pb_font_5x5[number + 48 - 32][i] >> (negative ? 1 : 0); // pb_digits_5x3 equals the single digit numbers, shifted one to the right, pb_font_5x5 starts from 32 as space
         } else if (number >= 10) {
             composite[i] = pb_digits_5x2[number / 10][i] << 3 | pb_digits_5x2[number % 10][i];
         }
@@ -213,11 +213,7 @@ void pb_type_LightMatrix_display_number(pbio_light_matrix_t *light_matrix, mp_ob
 
     // Display one faint dot in the middle to indicate negative
     if (negative) {
-        if (number < 10) {
-            pb_assert(pbio_light_matrix_set_pixel(light_matrix, 2, 0, 50));
-        } else {
-            pb_assert(pbio_light_matrix_set_pixel(light_matrix, 2, 2, 50));
-        }
+        pb_assert(pbio_light_matrix_set_pixel(light_matrix, 2, number<10? 0 : 2, 50));
     }
 }
 
