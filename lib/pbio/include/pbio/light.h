@@ -37,6 +37,7 @@ typedef struct _pbio_color_light_t pbio_color_light_t;
 pbio_error_t pbio_color_light_on_hsv(pbio_color_light_t *light, const pbio_color_hsv_t *hsv);
 pbio_error_t pbio_color_light_on(pbio_color_light_t *light, pbio_color_t color);
 pbio_error_t pbio_color_light_off(pbio_color_light_t *light);
+pbio_error_t pbio_color_light_get(pbio_color_light_t *light, pbio_color_hsv_t *hsv);
 void pbio_color_light_start_blink_animation(pbio_color_light_t *light, const pbio_color_hsv_t *hsv, const uint16_t *cells);
 void pbio_color_light_start_animation(pbio_color_light_t *light, uint16_t interval, const pbio_color_compressed_hsv_t *cells);
 

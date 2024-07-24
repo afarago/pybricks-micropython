@@ -105,7 +105,8 @@ pb_type_Color_obj_t *pb_type_Color_new_empty(void) {
     return color;
 }
 
-static mp_obj_t pb_type_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v) {
+//!!static 
+mp_obj_t pb_type_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v) {
     pb_type_Color_obj_t *self = pb_type_Color_new_empty();
 
     // Bind h to 0--360

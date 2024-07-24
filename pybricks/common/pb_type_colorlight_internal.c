@@ -126,10 +126,22 @@ STATIC mp_obj_t common_ColorLight_internal_animate(size_t n_args, const mp_obj_t
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_ColorLight_internal_animate_obj, 1, common_ColorLight_internal_animate);
 
+// pybricks._common.ColorLight.get
+STATIC mp_obj_t common_ColorLight_internal_get(mp_obj_t self_in) { //!!!!
+    common_ColorLight_internal_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    pbio_color_hsv_t hsv;
+    pb_assert(pbio_color_light_get(self->light, &hsv));
+    
+    return pb_type_Color_make_new_helper(hsv.h, hsv.s, hsv.v);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_ColorLight_internal_get_obj, common_ColorLight_internal_get);
+
 // dir(pybricks.builtins.ColorLight)
 STATIC const mp_rom_map_elem_t common_ColorLight_internal_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_on), MP_ROM_PTR(&common_ColorLight_internal_on_obj) },
     { MP_ROM_QSTR(MP_QSTR_off), MP_ROM_PTR(&common_ColorLight_internal_off_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get), MP_ROM_PTR(&common_ColorLight_internal_get_obj) },
     { MP_ROM_QSTR(MP_QSTR_blink), MP_ROM_PTR(&common_ColorLight_internal_blink_obj) },
     { MP_ROM_QSTR(MP_QSTR_animate), MP_ROM_PTR(&common_ColorLight_internal_animate_obj) },
 };

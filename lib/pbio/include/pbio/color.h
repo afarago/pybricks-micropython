@@ -49,7 +49,7 @@ typedef enum {
     PBIO_COLOR_MAGENTA = PBIO_COLOR_ENCODE(300, 100, 100), /**< magenta */
 } pbio_color_t;
 
-#undef PBIO_COLOR_ENCODE
+// #undef PBIO_COLOR_ENCODE
 
 /** Color hues for HSV color space. Values are in degrees (0 to 359). */
 typedef enum {
@@ -115,6 +115,7 @@ typedef struct __attribute__((__packed__)) {
 void pbio_color_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv);
 void pbio_color_hsv_to_rgb(const pbio_color_hsv_t *hsv, pbio_color_rgb_t *rgb);
 void pbio_color_to_hsv(pbio_color_t color, pbio_color_hsv_t *hsv);
+pbio_color_t pbio_color_hsv_to_color(pbio_color_hsv_t *hsv);
 void pbio_color_to_rgb(pbio_color_t color, pbio_color_rgb_t *rgb);
 void pbio_color_hsv_compress(const pbio_color_hsv_t *hsv, pbio_color_compressed_hsv_t *compressed);
 void pbio_color_hsv_expand(const pbio_color_compressed_hsv_t *compressed, pbio_color_hsv_t *hsv);

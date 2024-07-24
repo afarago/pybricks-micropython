@@ -153,6 +153,13 @@ static pbsys_status_light_t pbsys_status_light_instance;
 /** The system status light instance. */
 pbio_color_light_t *pbsys_status_light = &pbsys_status_light_instance.color_light;
 
+static pbio_error_t pbsys_status_light_get_hsv(pbio_color_light_t *light, pbio_color_hsv_t *hsv) {
+    pbsys_status_light_t *instance = PBIO_CONTAINER_OF(light, pbsys_status_light_t, color_light);
+    *hsv = instance->user_color;
+
+    return PBIO_SUCCESS;
+}
+
 static pbio_error_t pbsys_status_light_set_hsv(pbio_color_light_t *light, const pbio_color_hsv_t *hsv) {
     pbsys_status_light_t *instance = PBIO_CONTAINER_OF(light, pbsys_status_light_t, color_light);
     instance->user_color = *hsv;
@@ -169,6 +176,7 @@ static pbio_error_t pbsys_status_light_set_hsv(pbio_color_light_t *light, const 
 }
 
 static const pbio_color_light_funcs_t pbsys_status_light_funcs = {
+    .get_hsv = pbsys_status_light_get_hsv,
     .set_hsv = pbsys_status_light_set_hsv,
 };
 

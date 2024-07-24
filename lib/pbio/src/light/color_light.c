@@ -96,6 +96,13 @@ pbio_error_t pbio_color_light_off(pbio_color_light_t *light) {
     pbio_color_hsv_t hsv = { };
     return pbio_color_light_on_hsv(light, &hsv);
 }
+pbio_error_t pbio_color_light_get(pbio_color_light_t *light, pbio_color_hsv_t *hsv) {
+    // pbio_color_hsv_t hsv;
+    pbio_error_t err = light->funcs->get_hsv(light, hsv);
+
+    return err;
+}
+
 
 static uint32_t pbio_color_light_blink_next(pbio_light_animation_t *animation) {
     pbio_color_light_t *light = PBIO_CONTAINER_OF(animation, pbio_color_light_t, animation);

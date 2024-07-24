@@ -196,6 +196,12 @@ void pbio_color_to_hsv(pbio_color_t color, pbio_color_hsv_t *hsv) {
     hsv->v = (color & 0x2) ? 100 : ((color & 0x1) ? 50 : 0);
 }
 
+pbio_color_t pbio_color_hsv_to_color(pbio_color_hsv_t *hsv) {
+    // See PBIO_COLOR_ENCODE in color.h for encoding scheme
+    pbio_color_t result = PBIO_COLOR_ENCODE(hsv->h, hsv->s, hsv->v);
+    return result;
+}
+
 /**
  * Converts color name to RGB color value.
  *
