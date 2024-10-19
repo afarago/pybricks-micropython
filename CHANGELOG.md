@@ -4,16 +4,35 @@
 
 ## [Unreleased]
 
+### Changed
+
+- The method `DriveBase.angle()` now returns a float ([support#1844]). This
+  makes it properly equivalent to `hub.imu.heading`.
+
+### Fixed
+- Fixed `DriveBase.angle()` getting an incorrectly rounded gyro value, which
+  could cause `turn(360)` to be off by a degree ([support#1844]).
+
+[support#1844]: https://github.com/pybricks/support/issues/1844
+[support#1886]: https://github.com/pybricks/support/issues/1886
+
+## [3.6.0b2] - 2024-10-15
+
 ### Added
 
 - Allow color objects to be iterated as h, s, v = color_object or indexed
   as color_object[0]. This allows access to these properties in block
   coding ([support#1661]).
+- Added `observe_enable` to the hub `BLE` class to selectively turn observing
+  on and off, just like you can with broadcasting ([support#1806]).
+- Added `hub.system.info()` method with hub status flags ([support#1496]) and
+  value representing how the program was started.
 
 ### Changed
 
 - Relaxed speed limit from 1000 deg/s to 1200 deg/s for external Boost
   motor ([support#1623]).
+- Make `broadcast_channel` optional instead of defaulting to `0`.
 
 ### Fixed
 - Fixed persistent data not being deleted when swapping
@@ -28,9 +47,11 @@
   at exact multiples of its animation interval ([support#1295]).
 
 [support#1295]: https://github.com/pybricks/support/issues/1295
+[support#1496]: https://github.com/pybricks/support/issues/1496
 [support#1623]: https://github.com/pybricks/support/issues/1623
 [support#1661]: https://github.com/pybricks/support/issues/1661
 [support#1668]: https://github.com/pybricks/support/issues/1668
+[support#1806]: https://github.com/pybricks/support/issues/1806
 [support#1846]: https://github.com/pybricks/support/issues/1846
 [support#1858]: https://github.com/pybricks/support/issues/1858
 [support#1863]: https://github.com/pybricks/support/issues/1863
@@ -973,7 +994,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b1...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b2...HEAD
+[3.6.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b1...v3.6.0b2
 [3.6.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0...v3.6.0b1
 [3.5.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0b2...v3.5.0
 [3.5.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0b1...v3.5.0b2
