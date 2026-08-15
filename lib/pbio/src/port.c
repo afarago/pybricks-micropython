@@ -327,6 +327,17 @@ pbio_error_t pbio_port_get_servo(pbio_port_t *port, lego_device_type_id_t *expec
     // Return requested device.
     *servo = port->servo;
 
+    // Re-bind counter on each attach so HUM_EMU_PORTS_LIVE hot-adds work after
+    // a boot with empty ports (counter was NULL at pbio_port_init).
+    if (port->pdata->counter_driver_index != PBDRV_IOPORT_INDEX_NOT_AVAILABLE) {
+        pbdrv_counter_dev_t *counter = NULL;
+        if (pbdrv_counter_get_dev(port->pdata->counter_driver_index, &counter) == PBIO_SUCCESS) {
+            port->counter = counter;
+        } else {
+            port->counter = NULL;
+        }
+    }
+
     if (port->mode == PBIO_PORT_MODE_LEGO_DCM && port->lump_dev) {
         return pbio_port_lump_assert_type_id(port->lump_dev, expected_type_id);
     }

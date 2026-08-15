@@ -32,8 +32,6 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
 
 pbio_error_t pbdrv_usb_tx_chunk(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
-    static pbio_os_timer_t timer;
-
     PBIO_OS_ASYNC_BEGIN(state);
 
     // The common driver hands us a COBS-encoded frame with a trailing
@@ -55,8 +53,7 @@ pbio_error_t pbdrv_usb_tx_chunk(pbio_os_state_t *state, const uint8_t *data, uin
         #endif
     }
 
-    // Simulate some I/O time.
-    PBIO_OS_AWAIT_MS(state, &timer, 1);
+    // No artificial TX delay — hum-emu bidi needs low-latency stdout over the pipe.
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -107,11 +104,11 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
 
     // Upstream CI skipped stdin (TTY/REPL issues). hum-emu runs with CI_MODE=1
     // but feeds bidi over a pipe, so keep reading — platform.c sets O_NONBLOCK.
+    // Read first; only sleep when idle so bidi WRITE_STDIN is not delayed 0–1 ms.
     for (;;) {
-
-        PBIO_OS_AWAIT_MS(state, &timer, 1);
         if (usb_in_size) {
-            // Data not read yet.
+            // Data not consumed by the common driver yet.
+            PBIO_OS_AWAIT_MS(state, &timer, 1);
             continue;
         }
 
@@ -125,7 +122,9 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
         ssize_t num_read = read(STDIN_FILENO, &cmd[3], sizeof(cmd) - 3);
         if (num_read > 0) {
             usb_in_size = pbio_cobs_encode(cmd, 3 + num_read, usb_in_buf);
+            continue;
         }
+        PBIO_OS_AWAIT_MS(state, &timer, 1);
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);

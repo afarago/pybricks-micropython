@@ -12,6 +12,10 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
+#if PYBRICKS_HUB_VIRTUALHUB
+#include "hum_emu_values.h"
+#endif
+
 mp_obj_t make_acceleration_return_value(int32_t acceleration, int32_t deceleration) {
     // For backwards compatibility, return a single integer if acceleration
     // and deceleration are equal.
@@ -250,6 +254,12 @@ MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Control_trajectory_obj, pb_type_Control_trajec
 // pybricks._common.Control.done
 static mp_obj_t pb_type_Control_done(mp_obj_t self_in) {
     pb_type_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    #if PYBRICKS_HUB_VIRTUALHUB
+    pbio_port_id_t port_id;
+    if (hum_emu_control_port(self->control, &port_id) && hum_emu_value_has(port_id, "done")) {
+        return mp_obj_new_bool(hum_emu_value_get(port_id, "done", 1.0f) >= 0.5f);
+    }
+    #endif
     return mp_obj_new_bool(pbio_control_is_done(self->control));
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Control_done_obj, pb_type_Control_done);
@@ -259,6 +269,13 @@ MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Control_done_obj, pb_type_Control_done);
 // pybricks._common.Control.load
 static mp_obj_t pb_type_Control_load(mp_obj_t self_in) {
     pb_type_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    #if PYBRICKS_HUB_VIRTUALHUB
+    pbio_port_id_t port_id;
+    if (hum_emu_control_port(self->control, &port_id) && hum_emu_value_has(port_id, "load")) {
+        return mp_obj_new_int((int)hum_emu_value_get(port_id, "load", 0.0f));
+    }
+    #endif
 
     if (!pbio_control_is_active(self->control)) {
         return mp_obj_new_int(0);
@@ -274,6 +291,12 @@ MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Control_load_obj, pb_type_Control_load);
 // pybricks._common.Control.stalled
 static mp_obj_t pb_type_Control_stalled(mp_obj_t self_in) {
     pb_type_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    #if PYBRICKS_HUB_VIRTUALHUB
+    pbio_port_id_t port_id;
+    if (hum_emu_control_port(self->control, &port_id) && hum_emu_value_has(port_id, "stalled")) {
+        return mp_obj_new_bool(hum_emu_value_get(port_id, "stalled", 0.0f) >= 0.5f);
+    }
+    #endif
     uint32_t stall_duration;
     return mp_obj_new_bool(pbio_control_is_stalled(self->control, &stall_duration));
 }

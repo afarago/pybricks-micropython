@@ -25,6 +25,10 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
+#if PYBRICKS_HUB_VIRTUALHUB
+#include "hum_emu_values.h"
+#endif
+
 pbio_servo_t *pb_type_motor_get_servo(mp_obj_t motor_in) {
     return ((pb_type_Motor_obj_t *)pb_obj_get_base_class_obj(motor_in, &pb_type_Motor))->srv;
 }
@@ -132,6 +136,10 @@ static mp_obj_t pb_type_Motor_make_new(const mp_obj_type_t *type, size_t n_args,
     // Set up servo
     int32_t gear_ratio = get_gear_ratio(gears_in);
     pb_assert(pbio_servo_setup(self->srv, type_id, positive_direction, gear_ratio, reset_angle, precision_profile));
+
+    #if PYBRICKS_HUB_VIRTUALHUB
+    hum_emu_bind_control(&self->srv->control, port_id);
+    #endif
 
     #if PYBRICKS_PY_COMMON_CONTROL
     // Create an instance of the Control class
@@ -437,6 +445,11 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Motor_track_target_obj, 1, pb_type_Mot
 // pybricks.common.Motor.stalled
 static mp_obj_t pb_type_Motor_stalled(mp_obj_t self_in) {
     pb_type_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    #if PYBRICKS_HUB_VIRTUALHUB
+    if (hum_emu_value_has(self->port_id, "stalled")) {
+        return mp_obj_new_bool(hum_emu_value_get(self->port_id, "stalled", 0.0f) >= 0.5f);
+    }
+    #endif
     uint32_t stall_duration;
     bool stalled;
     pb_assert(pbio_servo_is_stalled(self->srv, &stalled, &stall_duration));
@@ -447,6 +460,11 @@ static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Motor_stalled_obj, pb_type_Motor_stalle
 // pybricks.common.Motor.done
 static mp_obj_t pb_type_Motor_done(mp_obj_t self_in) {
     pb_type_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    #if PYBRICKS_HUB_VIRTUALHUB
+    if (hum_emu_value_has(self->port_id, "done")) {
+        return mp_obj_new_bool(hum_emu_value_get(self->port_id, "done", 1.0f) >= 0.5f);
+    }
+    #endif
     return mp_obj_new_bool(pbio_control_is_done(&self->srv->control));
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Motor_done_obj, pb_type_Motor_done);
@@ -454,6 +472,11 @@ static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Motor_done_obj, pb_type_Motor_done);
 // pybricks.common.Motor.load
 static mp_obj_t pb_type_Motor_load(mp_obj_t self_in) {
     pb_type_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    #if PYBRICKS_HUB_VIRTUALHUB
+    if (hum_emu_value_has(self->port_id, "load")) {
+        return mp_obj_new_int((int)hum_emu_value_get(self->port_id, "load", 0.0f));
+    }
+    #endif
     int32_t load;
     pb_assert(pbio_servo_get_load(self->srv, &load));
     return mp_obj_new_int(load);

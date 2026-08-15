@@ -5,6 +5,8 @@
 
 #if PYBRICKS_PY_PUPDEVICES
 
+#include <string.h>
+
 #include "py/mphal.h"
 
 #include <pbio/int_math.h>
@@ -18,6 +20,57 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_color_map.h>
 #include <pybricks/util_pb/pb_error.h>
+
+#if PYBRICKS_HUB_VIRTUALHUB
+#include "hum_emu_values.h"
+
+static mp_obj_t hum_emu_color_obj_from_name(const char *name) {
+    if (!name || !*name) {
+        return MP_OBJ_NULL;
+    }
+    // Names are already normalized to UPPER by hum_emu_values.
+    if (strcmp(name, "RED") == 0) {
+        return MP_OBJ_FROM_PTR(&pb_Color_RED_obj);
+    }
+    if (strcmp(name, "BROWN") == 0) {
+        return MP_OBJ_FROM_PTR(&pb_Color_BROWN_obj);
+    }
+    if (strcmp(name, "ORANGE") == 0) {
+        return MP_OBJ_FROM_PTR(&pb_Color_ORANGE_obj);
+    }
+    if (strcmp(name, "YELLOW") == 0) {
+        return MP_OBJ_FROM_PTR(&pb_Color_YELLOW_obj);
+    }
+    if (strcmp(name, "GREEN") == 0) {
+        return MP_OBJ_FROM_PTR(&pb_Color_GREEN_obj);
+    }
+    if (strcmp(name, "CYAN") == 0) {
+        return MP_OBJ_FROM_PTR(&pb_Color_CYAN_obj);
+    }
+    if (strcmp(name, "BLUE") == 0) {
+        return MP_OBJ_FROM_PTR(&pb_Color_BLUE_obj);
+    }
+    if (strcmp(name, "VIOLET") == 0) {
+        return MP_OBJ_FROM_PTR(&pb_Color_VIOLET_obj);
+    }
+    if (strcmp(name, "MAGENTA") == 0) {
+        return MP_OBJ_FROM_PTR(&pb_Color_MAGENTA_obj);
+    }
+    if (strcmp(name, "NONE") == 0) {
+        return MP_OBJ_FROM_PTR(&pb_Color_NONE_obj);
+    }
+    if (strcmp(name, "BLACK") == 0) {
+        return MP_OBJ_FROM_PTR(&pb_Color_BLACK_obj);
+    }
+    if (strcmp(name, "GRAY") == 0) {
+        return MP_OBJ_FROM_PTR(&pb_Color_GRAY_obj);
+    }
+    if (strcmp(name, "WHITE") == 0) {
+        return MP_OBJ_FROM_PTR(&pb_Color_WHITE_obj);
+    }
+    return MP_OBJ_NULL;
+}
+#endif
 
 // Class structure for ColorSensor. Note: first two members must match pb_ColorSensor_obj_t
 typedef struct _pupdevices_ColorSensor_obj_t {
@@ -92,6 +145,17 @@ static void get_hsv_ambient(mp_obj_t self_in, pbio_color_hsv_t *hsv) {
 
 // pybricks.pupdevices.ColorSensor.hsv(surface=True)
 static mp_obj_t get_hsv_surface_true(mp_obj_t self_in) {
+    #if PYBRICKS_HUB_VIRTUALHUB
+    pupdevices_ColorSensor_obj_t *self_ovr = MP_OBJ_TO_PTR(self_in);
+    const char *cname = hum_emu_value_get_str(self_ovr->device_base.port_id, "color");
+    mp_obj_t named = hum_emu_color_obj_from_name(cname);
+    if (named != MP_OBJ_NULL) {
+        // Return a copy so callers can mutate HSV independently of the constant.
+        pb_type_Color_obj_t *color = pb_type_Color_new_empty();
+        color->hsv = *pb_type_Color_get_hsv(named);
+        return MP_OBJ_FROM_PTR(color);
+    }
+    #endif
     pb_type_Color_obj_t *color = pb_type_Color_new_empty();
     get_hsv_reflected(self_in, &color->hsv);
     return MP_OBJ_FROM_PTR(color);
@@ -100,6 +164,16 @@ static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_hsv_surface_true_obj, LEGO_DEV
 
 // pybricks.pupdevices.ColorSensor.hsv(surface=False)
 static mp_obj_t get_hsv_surface_false(mp_obj_t self_in) {
+    #if PYBRICKS_HUB_VIRTUALHUB
+    pupdevices_ColorSensor_obj_t *self_ovr = MP_OBJ_TO_PTR(self_in);
+    const char *cname = hum_emu_value_get_str(self_ovr->device_base.port_id, "color");
+    mp_obj_t named = hum_emu_color_obj_from_name(cname);
+    if (named != MP_OBJ_NULL) {
+        pb_type_Color_obj_t *color = pb_type_Color_new_empty();
+        color->hsv = *pb_type_Color_get_hsv(named);
+        return MP_OBJ_FROM_PTR(color);
+    }
+    #endif
     pb_type_Color_obj_t *color = pb_type_Color_new_empty();
     get_hsv_ambient(self_in, &color->hsv);
     return MP_OBJ_FROM_PTR(color);
@@ -108,6 +182,14 @@ static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_hsv_surface_false_obj, LEGO_DE
 
 // pybricks.pupdevices.ColorSensor.color(surface=True)
 static mp_obj_t get_color_surface_true(mp_obj_t self_in) {
+    #if PYBRICKS_HUB_VIRTUALHUB
+    pupdevices_ColorSensor_obj_t *self_ovr = MP_OBJ_TO_PTR(self_in);
+    const char *cname = hum_emu_value_get_str(self_ovr->device_base.port_id, "color");
+    mp_obj_t named = hum_emu_color_obj_from_name(cname);
+    if (named != MP_OBJ_NULL) {
+        return named;
+    }
+    #endif
     pbio_color_hsv_t hsv;
     get_hsv_reflected(self_in, &hsv);
     pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -117,6 +199,14 @@ static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_color_surface_true_obj, LEGO_D
 
 // pybricks.pupdevices.ColorSensor.color(surface=False)
 static mp_obj_t get_color_surface_false(mp_obj_t self_in) {
+    #if PYBRICKS_HUB_VIRTUALHUB
+    pupdevices_ColorSensor_obj_t *self_ovr = MP_OBJ_TO_PTR(self_in);
+    const char *cname = hum_emu_value_get_str(self_ovr->device_base.port_id, "color");
+    mp_obj_t named = hum_emu_color_obj_from_name(cname);
+    if (named != MP_OBJ_NULL) {
+        return named;
+    }
+    #endif
     pbio_color_hsv_t hsv;
     get_hsv_ambient(self_in, &hsv);
     pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);

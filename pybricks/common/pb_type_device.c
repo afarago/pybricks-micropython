@@ -9,6 +9,8 @@
 #include <pbio/port_interface.h>
 #include <pbio/port_lump.h>
 
+#include <lego/device.h>
+
 #include <pybricks/common.h>
 #include <pybricks/pupdevices.h>
 #include <pybricks/common/pb_type_device.h>
@@ -20,6 +22,7 @@
 
 #if PYBRICKS_HUB_VIRTUALHUB
 #include "hum_emu_ports.h"
+#include "hum_emu_values.h"
 
 static pbio_error_t pb_pup_device_stub_ready(pbio_os_state_t *state, mp_obj_t self_in) {
     (void)state;
@@ -42,8 +45,91 @@ void *pb_type_device_get_data(mp_obj_t self_in, uint8_t mode) {
     pb_type_device_obj_base_t *sensor = MP_OBJ_TO_PTR(self_in);
     #if PYBRICKS_HUB_VIRTUALHUB
     if (!sensor->lump_dev) {
-        static int32_t stub_data[8];
-        (void)mode;
+        // Stub LUMP payload. ForceSensor.__init__ requires CALIB[2] < CALIB[6].
+        static int16_t stub_data[16];
+        for (int i = 0; i < 16; i++) {
+            stub_data[i] = 0;
+        }
+        const int16_t released = 100;
+        const int16_t end = 4000;
+        stub_data[1] = 0;         // ForceSensor raw_offset
+        stub_data[2] = released;  // ForceSensor raw_released
+        stub_data[6] = end;       // ForceSensor raw_end
+        stub_data[0] = released;  // FRAW default = untouched
+
+        pbio_port_id_t port_id = sensor->port_id;
+        if (hum_emu_value_has(port_id, "force")) {
+            // force_N ≈ 10 * (raw - released) / (end - released)
+            float force_n = hum_emu_value_get(port_id, "force", 0.0f);
+            float raw_f = (float)released + force_n * (float)(end - released) / 10.0f;
+            if (raw_f < 0) {
+                raw_f = 0;
+            }
+            if (raw_f > 30000) {
+                raw_f = 30000;
+            }
+            stub_data[0] = (int16_t)raw_f;
+        } else if (hum_emu_value_has(port_id, "touched")) {
+            stub_data[0] = hum_emu_value_get(port_id, "touched", 0.0f) >= 0.5f
+                ? (int16_t)(released + 20)
+                : released;
+        } else if (hum_emu_value_has(port_id, "distance")) {
+            // ForceSensor.distance uses same FRAW scaling (~6.67mm span).
+            float dist_mm = hum_emu_value_get(port_id, "distance", 0.0f);
+            float raw_f = (float)released + dist_mm * (float)(end - released) / 6.67f;
+            if (raw_f < 0) {
+                raw_f = 0;
+            }
+            if (raw_f > 30000) {
+                raw_f = 30000;
+            }
+            stub_data[0] = (int16_t)raw_f;
+        }
+
+        if (hum_emu_value_has(port_id, "reflection")) {
+            // ColorSensor.reflection = (r+g+b)*100/3072 with each channel 0..1024
+            float pct = hum_emu_value_get(port_id, "reflection", 0.0f);
+            if (pct < 0) {
+                pct = 0;
+            }
+            if (pct > 100) {
+                pct = 100;
+            }
+            int16_t ch = (int16_t)(pct * 3072.0f / 300.0f); // avg of 3 channels
+            if (ch > 1024) {
+                ch = 1024;
+            }
+            stub_data[0] = ch;
+            stub_data[1] = ch;
+            stub_data[2] = ch;
+        }
+        if (hum_emu_value_has(port_id, "ambient")) {
+            // ambient uses SHSV[2] / 100 → 0..100
+            float pct = hum_emu_value_get(port_id, "ambient", 0.0f);
+            stub_data[2] = (int16_t)(pct * 100.0f);
+        }
+        const char *color_name = hum_emu_value_get_str(port_id, "color");
+        if (color_name) {
+            if (mode == LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__SHSV
+                || mode == LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__HSV
+                || mode == LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__AMBI) {
+                int16_t shsv[3];
+                if (hum_emu_color_shsv(color_name, shsv)) {
+                    stub_data[0] = shsv[0];
+                    stub_data[1] = shsv[1];
+                    stub_data[2] = shsv[2];
+                }
+            } else {
+                // RGB_I / REFLT / COLOR and other reflected-light modes
+                int16_t rgb[3];
+                if (hum_emu_color_rgb(color_name, rgb)) {
+                    stub_data[0] = rgb[0];
+                    stub_data[1] = rgb[1];
+                    stub_data[2] = rgb[2];
+                }
+            }
+        }
+
         return stub_data;
     }
     #endif
@@ -208,6 +294,7 @@ lego_device_type_id_t pb_type_device_init_class(pb_type_device_obj_base_t *self,
         }
         self->lump_dev = NULL;
         self->last_awaitable = NULL;
+        self->port_id = port_id;
         return (lego_device_type_id_t)configured;
     }
     #else
