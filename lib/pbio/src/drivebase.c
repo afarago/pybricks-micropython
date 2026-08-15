@@ -7,11 +7,17 @@
 #include <stdlib.h>
 
 #include <pbdrv/clock.h>
+#include <pbdrv/config.h>
+#include <pbio/control_settings.h>
 #include <pbio/error.h>
 #include <pbio/drivebase.h>
 #include <pbio/int_math.h>
 #include <pbio/imu.h>
 #include <pbio/servo.h>
+
+#if PBDRV_CONFIG_IMU_VIRTUAL
+#include "hum_emu_imu.h"
+#endif
 
 #if PBIO_CONFIG_NUM_DRIVEBASES > 0
 
@@ -176,6 +182,17 @@ static pbio_error_t pbio_drivebase_get_state_control(pbio_drivebase_t *db, pbio_
     // Subtract heading offset
     pbio_angle_diff(&state_heading->position, &db->heading_offset, &state_heading->position);
     pbio_angle_diff(&state_heading->position_estimate, &db->heading_offset, &state_heading->position_estimate);
+
+    #if PBDRV_CONFIG_IMU_VIRTUAL
+    // While controllers run, mirror wheel heading into hub.imu (use_gyro + bidi).
+    if (pbio_control_is_active(&db->control_distance) || pbio_control_is_active(&db->control_heading)) {
+        float yaw_deg = pbio_control_settings_ctl_to_app_long_float(
+            &db->control_heading.settings, &state_heading->position);
+        float rate_deg_s = (float)pbio_control_settings_ctl_to_app(
+            &db->control_heading.settings, state_heading->speed);
+        hum_emu_imu_set_odometry(yaw_deg, rate_deg_s);
+    }
+    #endif
 
     // Optionally use gyro to override the heading source for more accuracy.
     // The gyro manages its own offset, so we don't need to subtract it here.

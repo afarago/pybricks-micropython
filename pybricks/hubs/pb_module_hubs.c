@@ -18,6 +18,9 @@ static const mp_rom_map_elem_t hubs_globals_table[] = {
     #ifdef PYBRICKS_HUB_CLASS_NAME_ALIAS
     { MP_ROM_QSTR(PYBRICKS_HUB_CLASS_NAME_ALIAS), MP_ROM_PTR(&pb_type_ThisHub) },
     #endif
+    #ifdef PYBRICKS_HUB_CLASS_NAME_ALIAS2
+    { MP_ROM_QSTR(PYBRICKS_HUB_CLASS_NAME_ALIAS2), MP_ROM_PTR(&pb_type_ThisHub) },
+    #endif
 };
 static MP_DEFINE_CONST_DICT(pb_module_hubs_globals, hubs_globals_table);
 

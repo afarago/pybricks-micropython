@@ -9,13 +9,18 @@
 #define PYBRICKS_HUB_NAME                       "virtualhub"
 #define PYBRICKS_HUB_VIRTUALHUB                 (1)
 #define PYBRICKS_HUB_CLASS_NAME_ALIAS           (MP_QSTR_EV3Brick)
+// Also export PrimeHub for RoboVibe / Pybricks Code SPIKE programs.
+#ifndef PYBRICKS_HUB_CLASS_NAME_ALIAS2
+#define PYBRICKS_HUB_CLASS_NAME_ALIAS2          (MP_QSTR_PrimeHub)
+#endif
+
 
 // Pybricks modules
 #define PYBRICKS_PY_COMMON                      (1)
 #define PYBRICKS_PY_COMMON_CHARGER              (1)
 #define PYBRICKS_PY_COMMON_COLOR_LIGHT          (1)
 #define PYBRICKS_PY_COMMON_CONTROL              (1)
-#define PYBRICKS_PY_COMMON_IMU                  (0)
+#define PYBRICKS_PY_COMMON_IMU                  (1)
 #define PYBRICKS_PY_COMMON_KEYPAD               (1)
 #define PYBRICKS_PY_COMMON_KEYPAD_HUB_BUTTONS   (1)
 #define PYBRICKS_PY_COMMON_LIGHT_ARRAY          (1)

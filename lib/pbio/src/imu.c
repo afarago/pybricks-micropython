@@ -22,6 +22,10 @@
 #include <pbsys/storage.h>
 #include <pbsys/storage_settings.h>
 
+#if PBDRV_CONFIG_IMU_VIRTUAL
+#include "hum_emu_imu.h"
+#endif
+
 #if PBIO_CONFIG_IMU
 
 /**
@@ -369,7 +373,11 @@ static uint32_t stationary_time_last;
  * @return    True if it has been stationary at least once in the last 10 minutes.
 */
 bool pbio_imu_is_ready(void) {
+    #if PBDRV_CONFIG_IMU_VIRTUAL
+    return true;
+    #else
     return stationary_counter > 0 && pbdrv_clock_get_ms() - stationary_time_last < 10 * 60 * 1000;
+    #endif
 }
 
 // Called by driver to process unfiltered gyro and accelerometer data recorded while stationary.
@@ -573,8 +581,17 @@ pbio_error_t pbio_imu_get_settings(pbio_imu_persistent_settings_t **settings) {
  * @param [in]  calibrated  Whether to get calibrated or uncalibrated data.
  */
 void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values, bool calibrated) {
+    #if PBDRV_CONFIG_IMU_VIRTUAL
+    // DriveBase pushes clockwise-positive yaw rate; pbio_imu_get_heading_scaled
+    // uses -z, so store the negation here.
+    (void)calibrated;
+    values->x = 0.0f;
+    values->y = 0.0f;
+    values->z = -hum_emu_imu_yaw_rate();
+    #else
     pbio_geometry_xyz_t *angular_velocity = calibrated ? &angular_velocity_calibrated : &angular_velocity_uncalibrated;
     pbio_geometry_vector_map(&pbio_imu_base_orientation, angular_velocity, values);
+    #endif
 }
 
 /**
@@ -585,8 +602,22 @@ void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values, bool calibrated)
  * @param [out] values      The acceleration vector.
  */
 void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values, bool calibrated) {
+    #if PBDRV_CONFIG_IMU_VIRTUAL
+    (void)calibrated;
+    const float deg2rad = 0.01745329252f;
+    float pitch = hum_emu_imu_pitch() * deg2rad;
+    float roll = hum_emu_imu_roll() * deg2rad;
+    const float g = 9810.0f;
+    pbio_geometry_xyz_t body = {
+        .x = -sinf(pitch) * g,
+        .y = sinf(roll) * cosf(pitch) * g,
+        .z = cosf(roll) * cosf(pitch) * g,
+    };
+    pbio_geometry_vector_map(&pbio_imu_base_orientation, &body, values);
+    #else
     pbio_geometry_xyz_t *acceleration = calibrated ? &acceleration_calibrated : &acceleration_uncalibrated;
     pbio_geometry_vector_map(&pbio_imu_base_orientation, acceleration, values);
+    #endif
 }
 
 /**
@@ -596,12 +627,16 @@ void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values, bool calibrated) {
  * @param [out] values      The acceleration vector.
  */
 void pbio_imu_get_tilt_vector(pbio_geometry_xyz_t *values) {
+    #if PBDRV_CONFIG_IMU_VIRTUAL
+    pbio_imu_get_acceleration(values, true);
+    #else
     pbio_geometry_xyz_t direction = {
         .x = pbio_imu_rotation.m31,
         .y = pbio_imu_rotation.m32,
         .z = pbio_imu_rotation.m33,
     };
     pbio_geometry_vector_map(&pbio_imu_base_orientation, &direction, values);
+    #endif
 }
 
 /**
@@ -676,6 +711,13 @@ static float heading_offset_3d = 0;
  */
 float pbio_imu_get_heading(pbio_imu_heading_type_t type) {
 
+    #if PBDRV_CONFIG_IMU_VIRTUAL
+    // Absolute yaw from hum-emu REPL / HUM_EMU_IMU_LIVE (ignore reset offset so
+    // `imu 90` and bidi heading stay aligned after hub construction).
+    (void)type;
+    return hum_emu_imu_yaw();
+    #else
+
     float correction = (persistent_settings && (persistent_settings->flags & PBIO_IMU_SETTINGS_FLAGS_HEADING_CORRECTION_1D_SET)) ?
         // If set, adjust by the user-specified scaling constant.
         (360.0f / persistent_settings->heading_correction_1d):
@@ -693,6 +735,7 @@ float pbio_imu_get_heading(pbio_imu_heading_type_t type) {
     pbio_geometry_vector_map(&pbio_imu_base_orientation, &single_axis_rotation, &heading_mapped);
 
     return -heading_mapped.z * correction - heading_offset_1d;
+    #endif
 }
 
 /**
@@ -704,9 +747,18 @@ float pbio_imu_get_heading(pbio_imu_heading_type_t type) {
  * @param [in] desired_heading  The desired heading value.
  */
 void pbio_imu_set_heading(float desired_heading) {
+    #if PBDRV_CONFIG_IMU_VIRTUAL
+    // Emulator heading tracks absolute yaw; reset_heading does not invent an offset.
+    (void)desired_heading;
+    heading_rotations = 0;
+    heading_offset_3d = 0;
+    heading_offset_1d = 0;
+    return;
+    #else
     heading_rotations = 0;
     heading_offset_3d = pbio_imu_get_heading(PBIO_IMU_HEADING_TYPE_3D) + heading_offset_3d - desired_heading;
     heading_offset_1d = pbio_imu_get_heading(PBIO_IMU_HEADING_TYPE_1D) + heading_offset_1d - desired_heading;
+    #endif
 }
 
 /**

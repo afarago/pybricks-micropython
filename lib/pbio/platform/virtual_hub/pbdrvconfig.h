@@ -48,6 +48,9 @@
 // Device types come from HUM_EMU_PORTS (hum-emu), not platform_data.type_id.
 #define PBDRV_CONFIG_HUM_EMU_PORTS                          (1)
 
+#define PBDRV_CONFIG_IMU                                    (1)
+#define PBDRV_CONFIG_IMU_VIRTUAL                            (1)
+
 #define PBDRV_CONFIG_HAS_PORT_A (1)
 #define PBDRV_CONFIG_HAS_PORT_B (1)
 #define PBDRV_CONFIG_HAS_PORT_C (1)

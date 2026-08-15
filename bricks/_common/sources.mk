@@ -261,6 +261,8 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 ifeq ($(PBIO_PLATFORM),virtual_hub)
 PBIO_SRC_C += lib/pbio/platform/virtual_hub/hum_emu_ports.c
 PBIO_SRC_C += lib/pbio/platform/virtual_hub/hum_emu_values.c
+PBIO_SRC_C += lib/pbio/platform/virtual_hub/hum_emu_imu.c
+PBIO_SRC_C += lib/pbio/drv/imu/imu_virtual.c
 endif
 
 # LEGO specification library

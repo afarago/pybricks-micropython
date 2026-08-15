@@ -28,6 +28,9 @@ typedef struct _hubs_VirtualHub_obj_t {
     mp_obj_base_t base;
     mp_obj_t battery;
     mp_obj_t buttons;
+    #if PYBRICKS_PY_COMMON_IMU
+    mp_obj_t imu;
+    #endif
     mp_obj_t light;
     mp_obj_t screen;
     mp_obj_t system;
@@ -71,11 +74,6 @@ static mp_obj_t hubs_VirtualHub_make_new(const mp_obj_type_t *type, size_t n_arg
         #endif
         );
 
-    (void)top_side_in;
-    (void)front_side_in;
-
-
-
     hubs_VirtualHub_obj_t *self = mp_obj_malloc(hubs_VirtualHub_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
 
@@ -84,6 +82,12 @@ static mp_obj_t hubs_VirtualHub_make_new(const mp_obj_type_t *type, size_t n_arg
     #endif
 
     self->buttons = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), button_pressed);
+    #if PYBRICKS_PY_COMMON_IMU
+    self->imu = pb_type_IMU_obj_new(MP_OBJ_FROM_PTR(self), top_side_in, front_side_in);
+    #else
+    (void)top_side_in;
+    (void)front_side_in;
+    #endif
     // FIXME: Implement lights.
     // self->light = common_ColorLight_internal_obj_new(pbsys_status_light_main);
     self->screen = pb_type_Image_display_obj_new();
@@ -97,6 +101,9 @@ static const pb_attr_dict_entry_t hubs_VirtualHub_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_ble, hubs_VirtualHub_obj_t, ble),
     #endif
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, hubs_VirtualHub_obj_t, buttons),
+    #if PYBRICKS_PY_COMMON_IMU
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_imu, hubs_VirtualHub_obj_t, imu),
+    #endif
     // PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, hubs_VirtualHub_obj_t, light),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_screen, hubs_VirtualHub_obj_t, screen),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_system, hubs_VirtualHub_obj_t, system),
