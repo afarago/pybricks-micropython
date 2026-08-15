@@ -258,6 +258,10 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	sys/telemetry.c \
 	)
 
+ifeq ($(PBIO_PLATFORM),virtual_hub)
+PBIO_SRC_C += lib/pbio/platform/virtual_hub/hum_emu_ports.c
+endif
+
 # LEGO specification library
 
 LEGO_SPEC_SRC_C = $(addprefix lib/lego/,\

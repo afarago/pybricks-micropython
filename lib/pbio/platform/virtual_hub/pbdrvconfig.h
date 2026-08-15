@@ -25,11 +25,9 @@
 #define PBDRV_CONFIG_BUTTON_VIRTUAL                         (1)
 
 #define PBDRV_CONFIG_CLOCK                                  (1)
-#ifdef PBDRV_CONFIG_RUN_ON_CI
-#define PBDRV_CONFIG_CLOCK_TEST                             (1)
-#else
+// Wall clock even when RUN_ON_CI (no Bluetooth). The test clock races
+// motor moves many times faster than real time, which is wrong for hum-emu.
 #define PBDRV_CONFIG_CLOCK_LINUX                            (1)
-#endif
 
 #define PBDRV_CONFIG_COUNTER                                (1)
 
@@ -47,6 +45,8 @@
 #define PBDRV_CONFIG_MOTOR_DRIVER                           (1)
 #define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV                   (6)
 #define PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION        (1)
+// Device types come from HUM_EMU_PORTS (hum-emu), not platform_data.type_id.
+#define PBDRV_CONFIG_HUM_EMU_PORTS                          (1)
 
 #define PBDRV_CONFIG_HAS_PORT_A (1)
 #define PBDRV_CONFIG_HAS_PORT_B (1)

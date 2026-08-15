@@ -17,6 +17,10 @@
 
 #include "motor_driver_virtual_simulation.h"
 
+#if PBDRV_CONFIG_HUM_EMU_PORTS
+#include "hum_emu_ports.h"
+#endif
+
 typedef struct _pbio_simulation_model_t {
     double d_angle_d_speed;
     double d_speed_d_speed;
@@ -46,6 +50,8 @@ struct _pbdrv_motor_driver_dev_t {
     double torque;
     const pbio_simulation_model_t *model;
     const pbdrv_motor_driver_virtual_simulation_platform_data_t *pdata;
+    /** Runtime type from HUM_EMU_PORTS (may differ from pdata->type_id). */
+    lego_device_type_id_t type_id;
     pbdrv_counter_dev_t counter;
 };
 
@@ -89,27 +95,42 @@ static void simulation_init(void) {
         driver->torque = 0;
         driver->voltage = 0;
 
+        // Prefer HUM_EMU_PORTS (hum-emu). Ignore pdata->type_id on virtualhub.
+        #if PBDRV_CONFIG_HUM_EMU_PORTS
+        driver->type_id = hum_emu_port_motor_type_id(driver->pdata->port_id);
+        #else
+        driver->type_id = driver->pdata->type_id;
+        #endif
+
         // Select model corresponding to device ID.
-        switch (driver->pdata->type_id) {
-            case LEGO_DEVICE_TYPE_ID_SPIKE_S_MOTOR:
-                driver->model = &model_technic_m_angular; // TODO
-                break;
-            case LEGO_DEVICE_TYPE_ID_SPIKE_M_MOTOR:
-                driver->model = &model_technic_m_angular;
-                break;
-            case LEGO_DEVICE_TYPE_ID_SPIKE_L_MOTOR:
-                driver->model = &model_technic_m_angular; // TODO
-                break;
-            default:
-            case LEGO_DEVICE_TYPE_ID_NONE:
-                driver->model = NULL;
-                break;
+        if (driver->type_id != LEGO_DEVICE_TYPE_ID_NONE) {
+            driver->model = &model_technic_m_angular;
+        } else {
+            driver->model = NULL;
         }
     }
 }
 
+static void pbdrv_motor_driver_refresh_type(pbdrv_motor_driver_dev_t *driver) {
+    #if PBDRV_CONFIG_HUM_EMU_PORTS
+    // Hot-reload: HUM_EMU_PORTS_LIVE may change while the program runs.
+    driver->type_id = hum_emu_port_motor_type_id(driver->pdata->port_id);
+    if (driver->type_id != LEGO_DEVICE_TYPE_ID_NONE) {
+        driver->model = &model_technic_m_angular;
+    } else {
+        driver->model = NULL;
+    }
+    #else
+    (void)driver;
+    #endif
+}
+
 pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
-    if (id >= PBIO_ARRAY_SIZE(motor_driver_devs) || motor_driver_devs[id].pdata->type_id == LEGO_DEVICE_TYPE_ID_NONE) {
+    if (id >= PBIO_ARRAY_SIZE(motor_driver_devs)) {
+        return PBIO_ERROR_NO_DEV;
+    }
+    pbdrv_motor_driver_refresh_type(&motor_driver_devs[id]);
+    if (motor_driver_devs[id].type_id == LEGO_DEVICE_TYPE_ID_NONE) {
         return PBIO_ERROR_NO_DEV;
     }
     *dev = &motor_driver_devs[id].counter;
@@ -118,7 +139,8 @@ pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
 }
 
 pbio_error_t pbdrv_counter_assert_type(pbdrv_counter_dev_t *dev, lego_device_type_id_t *expected_type_id) {
-    lego_device_type_id_t id = dev->motor_driver->pdata->type_id;
+    pbdrv_motor_driver_refresh_type(dev->motor_driver);
+    lego_device_type_id_t id = dev->motor_driver->type_id;
 
     // There is no counter here.
     if (id == LEGO_DEVICE_TYPE_ID_NONE) {

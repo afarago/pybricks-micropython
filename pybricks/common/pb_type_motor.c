@@ -156,9 +156,10 @@ static mp_obj_t pb_type_Motor_make_new(const mp_obj_type_t *type, size_t n_args,
 // pybricks.common.Motor.__repr__
 static void pb_type_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     pb_type_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, "%q(Port.%c, %q.%q)",
-        self->base.type->name, self->port_id, MP_QSTR_Direction,
-        self->dcmotor->direction == PBIO_DIRECTION_CLOCKWISE ? MP_QSTR_CLOCKWISE : MP_QSTR_COUNTERCLOCKWISE);
+    // Avoid %q here: ROM-compressed qstrs can fault in qstr_data on virtualhub.
+    const char *dir = (self->dcmotor != NULL && self->dcmotor->direction == PBIO_DIRECTION_CLOCKWISE)
+        ? "CLOCKWISE" : "COUNTERCLOCKWISE";
+    mp_printf(print, "Motor(Port.%c, Direction.%s)", (int)self->port_id, dir);
 }
 
 // pybricks.common.Motor.dc

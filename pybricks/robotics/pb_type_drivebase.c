@@ -454,9 +454,13 @@ static mp_obj_t pb_type_DriveBase_use_gyro(size_t n_args, const mp_obj_t *pos_ar
         PB_ARG_REQUIRED(use_gyro));
 
     pbio_imu_heading_type_t type = PBIO_IMU_HEADING_TYPE_NONE;
+    #if PBIO_CONFIG_IMU
     if (mp_obj_is_true(use_gyro_in)) {
         type = PBIO_IMU_HEADING_TYPE_3D;
     }
+    #else
+    (void)use_gyro_in;
+    #endif
 
     pb_assert(pbio_drivebase_set_use_gyro(self->db, type));
     return mp_const_none;

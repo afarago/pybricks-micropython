@@ -18,6 +18,16 @@
 #include <py/runtime.h>
 #include <py/mphal.h>
 
+#if PYBRICKS_HUB_VIRTUALHUB
+#include "hum_emu_ports.h"
+
+static pbio_error_t pb_pup_device_stub_ready(pbio_os_state_t *state, mp_obj_t self_in) {
+    (void)state;
+    (void)self_in;
+    return PBIO_SUCCESS;
+}
+#endif
+
 /**
  * Non-blocking version of powered up data getter. Will raise exception if
  * sensor is not already in the right mode.
@@ -30,6 +40,13 @@
  */
 void *pb_type_device_get_data(mp_obj_t self_in, uint8_t mode) {
     pb_type_device_obj_base_t *sensor = MP_OBJ_TO_PTR(self_in);
+    #if PYBRICKS_HUB_VIRTUALHUB
+    if (!sensor->lump_dev) {
+        static int32_t stub_data[8];
+        (void)mode;
+        return stub_data;
+    }
+    #endif
     void *data = NULL;
     pb_assert(pbio_port_lump_get_data(sensor->lump_dev, mode, &data));
     return data;
@@ -47,6 +64,11 @@ void *pb_type_device_get_data(mp_obj_t self_in, uint8_t mode) {
  */
 void *pb_type_device_get_data_blocking(mp_obj_t self_in, uint8_t mode) {
     pb_type_device_obj_base_t *sensor = MP_OBJ_TO_PTR(self_in);
+    #if PYBRICKS_HUB_VIRTUALHUB
+    if (!sensor->lump_dev) {
+        return pb_type_device_get_data(self_in, mode);
+    }
+    #endif
     pb_assert(pbio_port_lump_set_mode(sensor->lump_dev, mode));
     pbio_error_t err;
     while ((err = pbio_port_lump_is_ready(sensor->lump_dev)) == PBIO_ERROR_AGAIN) {
@@ -90,6 +112,16 @@ mp_obj_t pb_type_device_method_call(mp_obj_t self_in, size_t n_args, size_t n_kw
 
     mp_obj_t sensor_in = args[0];
     pb_type_device_obj_base_t *sensor = MP_OBJ_TO_PTR(sensor_in);
+    #if PYBRICKS_HUB_VIRTUALHUB
+    if (!sensor->lump_dev) {
+        pb_type_async_t config = {
+            .iter_once = pb_pup_device_stub_ready,
+            .parent_obj = sensor_in,
+            .return_map = method->get_values,
+        };
+        return pb_type_async_wait_or_await(&config, &sensor->last_awaitable, true);
+    }
+    #endif
     pb_assert(pbio_port_lump_set_mode(sensor->lump_dev, method->mode));
 
     pb_type_async_t config = {
@@ -121,6 +153,18 @@ MP_DEFINE_CONST_OBJ_TYPE(
  * @return                  Awaitable object.
  */
 mp_obj_t pb_type_device_set_data(pb_type_device_obj_base_t *sensor, uint8_t mode, const void *data, uint8_t size) {
+    #if PYBRICKS_HUB_VIRTUALHUB
+    if (!sensor->lump_dev) {
+        (void)mode;
+        (void)data;
+        (void)size;
+        pb_type_async_t config = {
+            .iter_once = pb_pup_device_stub_ready,
+            .parent_obj = MP_OBJ_FROM_PTR(sensor),
+        };
+        return pb_type_async_wait_or_await(&config, &sensor->last_awaitable, true);
+    }
+    #endif
     pb_assert(pbio_port_lump_set_mode_with_data(sensor->lump_dev, mode, data, size));
     pb_type_async_t config = {
         .iter_once = pb_pup_device_iter_once,
@@ -152,6 +196,22 @@ lego_device_type_id_t pb_type_device_init_class(pb_type_device_obj_base_t *self,
     pbio_port_t *port;
     pb_assert(pbio_port_get_port(port_id, &port));
 
+    #if PYBRICKS_HUB_VIRTUALHUB
+    // No LUMP UART on virtualhub: attach typed sensors from HUM_EMU_PORTS.
+    {
+        uint16_t configured = hum_emu_port_type_id(port_id);
+        if (configured == 0) {
+            pb_assert(PBIO_ERROR_NO_DEV);
+        }
+        if (valid_id != LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART && (uint16_t)valid_id != configured) {
+            pb_assert(PBIO_ERROR_NO_DEV);
+        }
+        self->lump_dev = NULL;
+        self->last_awaitable = NULL;
+        return (lego_device_type_id_t)configured;
+    }
+    #else
+
     // Set the port mode to LEGO if it is not already set.
     pb_device_set_lego_mode(port);
 
@@ -167,6 +227,7 @@ lego_device_type_id_t pb_type_device_init_class(pb_type_device_obj_base_t *self,
     pb_assert(err);
     self->last_awaitable = NULL;
     return actual_id;
+    #endif
 }
 
 #endif // PYBRICKS_PY_PUPDEVICES

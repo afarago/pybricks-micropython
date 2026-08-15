@@ -46,25 +46,49 @@
 
 static uint32_t pbsys_hmi_num_programs;
 
-static void load_program(const char *path) {
-    // Pybricksdev helper script, pipes multi-mpy to us.
-    char command[512];
-    snprintf(command, sizeof(command), "pybricksdev compile --bin %s", path);
-    FILE *pipe = popen(command, "r");
-    if (!pipe) {
-        printf("Failed to compile program with Pybricksdev\n");
-        exit(0);
+static bool path_has_suffix(const char *path, const char *suffix) {
+    size_t path_len = strlen(path);
+    size_t suffix_len = strlen(suffix);
+    return path_len >= suffix_len && strcmp(path + path_len - suffix_len, suffix) == 0;
+}
+
+static bool load_program_blob(const char *path, uint8_t *program_buf, uint32_t *program_size) {
+    FILE *file = fopen(path, "rb");
+    if (!file) {
+        return false;
     }
+    *program_size = (uint32_t)fread(program_buf, 1, PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE, file);
+    fclose(file);
+    return *program_size > 0;
+}
 
-    // Read the multi-mpy file from pipe.
+static void load_program(const char *path) {
     uint8_t program_buf[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
-    uint32_t program_size;
-    program_size = fread(program_buf, 1, sizeof(program_buf), pipe);
-    pclose(pipe);
+    uint32_t program_size = 0;
 
-    if (program_size == 0) {
-        printf("Error reading from pipe\n");
-        exit(0);
+    // Precompiled multi-mpy6 from hum-emu / pybricksdev --bin.
+    if (path_has_suffix(path, ".bin") || path_has_suffix(path, ".mpy6")) {
+        if (!load_program_blob(path, program_buf, &program_size)) {
+            printf("Error reading program blob\n");
+            exit(0);
+        }
+    } else {
+        // Pybricksdev helper script, pipes multi-mpy to us.
+        char command[512];
+        snprintf(command, sizeof(command), "pybricksdev compile --bin %s", path);
+        FILE *pipe = popen(command, "r");
+        if (!pipe) {
+            printf("Failed to compile program with Pybricksdev\n");
+            exit(0);
+        }
+
+        program_size = (uint32_t)fread(program_buf, 1, sizeof(program_buf), pipe);
+        pclose(pipe);
+
+        if (program_size == 0) {
+            printf("Error reading from pipe\n");
+            exit(0);
+        }
     }
 
     // Load the program in storage, as if receiving it.
@@ -114,8 +138,9 @@ void pbsys_hmi_virtual_reload_programs(void) {
     // Parse given programs.
     for (int i = 1; i < main_argc; i++) {
 
-        size_t len = strlen(main_argv[i]);
-        if (len < 3 || strcmp(main_argv[i] + len - 3, ".py")) {
+        if (!(path_has_suffix(main_argv[i], ".py")
+            || path_has_suffix(main_argv[i], ".bin")
+            || path_has_suffix(main_argv[i], ".mpy6"))) {
             continue;
         }
 
@@ -141,6 +166,10 @@ void pbsys_hmi_init_start_current_slot_from_signal(int sig) {
 void pbsys_hmi_init(void) {
     signal(SIGUSR1, pbsys_hmi_init_start_current_slot_from_signal);
     pbsys_hmi_virtual_reload_programs();
+    // CI builds omit Bluetooth, so system.info() only exposes USB.
+    // Bidi loops exit unless a host-connected flag is true.
+    pbsys_status_set(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
+    pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
 }
 
 void pbsys_hmi_deinit(void) {

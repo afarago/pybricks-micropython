@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_IODEVICES_PUP_DEVICE
+#if PYBRICKS_PY_IODEVICES_PUP_DEVICE && !PYBRICKS_HUB_VIRTUALHUB
 
 #include <string.h>
 
@@ -317,4 +317,150 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_iodevices_PUPDevice,
     make_new, iodevices_PUPDevice_make_new,
     locals_dict, &iodevices_PUPDevice_locals_dict);
 
-#endif // PYBRICKS_PY_IODEVICES_PUP_DEVICE
+#endif // PYBRICKS_PY_IODEVICES_PUP_DEVICE && !PYBRICKS_HUB_VIRTUALHUB
+
+#if PYBRICKS_PY_IODEVICES_PUP_DEVICE && PYBRICKS_HUB_VIRTUALHUB
+
+#include <stdio.h>
+#include <string.h>
+
+#include "py/runtime.h"
+
+#include <lego/lump.h>
+#include <pbio/port_interface.h>
+
+#include "iodevices.h"
+
+#include <pybricks/parameters.h>
+#include <pybricks/tools/pb_type_async.h>
+#include <pybricks/util_mp/pb_kwarg_helper.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_pb/pb_error.h>
+
+#include "hum_emu_ports.h"
+
+#define STUB_NUM_MODES  (LUMP_MAX_EXT_MODE + 1)
+#define STUB_NUM_VALUES 8
+
+typedef struct _iodevices_PUPDevice_obj_t {
+    mp_obj_base_t base;
+    pb_type_async_t *last_awaitable;
+    int32_t values[STUB_NUM_MODES][STUB_NUM_VALUES];
+    uint8_t nvalues[STUB_NUM_MODES];
+    pbio_port_id_t port_id;
+    uint16_t type_id;
+} iodevices_PUPDevice_obj_t;
+
+static mp_obj_t iodevices_PUPDevice_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port));
+
+    iodevices_PUPDevice_obj_t *self = mp_obj_malloc(iodevices_PUPDevice_obj_t, type);
+    pbio_port_t *port;
+    pbio_port_id_t port_id = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pb_assert(pbio_port_get_port(port_id, &port));
+
+    self->port_id = port_id;
+    self->type_id = hum_emu_port_type_id(port_id);
+    if (self->type_id == 0) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+
+    for (uint8_t m = 0; m < STUB_NUM_MODES; m++) {
+        self->nvalues[m] = STUB_NUM_VALUES;
+    }
+    return MP_OBJ_FROM_PTR(self);
+}
+
+static mp_obj_t iodevices_PUPDevice_info(mp_obj_t self_in) {
+    iodevices_PUPDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    mp_obj_t info_dict = mp_obj_new_dict(2);
+    mp_obj_dict_store(info_dict, MP_ROM_QSTR(MP_QSTR_id), MP_OBJ_NEW_SMALL_INT(self->type_id));
+
+    mp_obj_t modes[STUB_NUM_MODES];
+    for (uint8_t m = 0; m < STUB_NUM_MODES; m++) {
+        char name[8];
+        snprintf(name, sizeof(name), "MODE%d", m);
+        mp_obj_t values[] = {
+            mp_obj_new_str(name, strlen(name)),
+            mp_obj_new_int(STUB_NUM_VALUES),
+            mp_obj_new_int(LUMP_DATA_TYPE_DATA8),
+        };
+        modes[m] = mp_obj_new_tuple(MP_ARRAY_SIZE(values), values);
+    }
+    mp_obj_dict_store(info_dict, MP_ROM_QSTR(MP_QSTR_modes), mp_obj_new_tuple(STUB_NUM_MODES, modes));
+    return info_dict;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(iodevices_PUPDevice_info_obj, iodevices_PUPDevice_info);
+
+static mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        iodevices_PUPDevice_obj_t, self,
+        PB_ARG_REQUIRED(mode));
+
+    mp_int_t mode = mp_obj_get_int(mode_in);
+    if (mode < 0 || mode >= STUB_NUM_MODES) {
+        mp_raise_msg(&mp_type_ValueError, MP_ERROR_TEXT("Invalid mode"));
+    }
+
+    uint8_t n = self->nvalues[mode];
+    mp_obj_t values[STUB_NUM_VALUES];
+    for (uint8_t i = 0; i < n; i++) {
+        values[i] = mp_obj_new_int(self->values[mode][i]);
+    }
+    return pb_type_async_return_result(mp_obj_new_tuple(n, values), &self->last_awaitable);
+}
+MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_PUPDevice_read_obj, 1, iodevices_PUPDevice_read);
+
+static mp_obj_t iodevices_PUPDevice_write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        iodevices_PUPDevice_obj_t, self,
+        PB_ARG_REQUIRED(mode),
+        PB_ARG_REQUIRED(data));
+
+    mp_int_t mode = mp_obj_get_int(mode_in);
+    if (mode < 0 || mode >= STUB_NUM_MODES) {
+        mp_raise_msg(&mp_type_ValueError, MP_ERROR_TEXT("Invalid mode"));
+    }
+
+    mp_obj_t *items;
+    size_t n;
+    mp_obj_get_array(data_in, &n, &items);
+    if (n == 0 || n > STUB_NUM_VALUES) {
+        mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("Expected 1 to %d values"), STUB_NUM_VALUES);
+    }
+
+    memset(self->values[mode], 0, sizeof(self->values[mode]));
+    for (size_t i = 0; i < n; i++) {
+        self->values[mode][i] = mp_obj_get_int(items[i]);
+    }
+    self->nvalues[mode] = (uint8_t)n;
+    return pb_type_async_return_result(mp_const_none, &self->last_awaitable);
+}
+MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_PUPDevice_write_obj, 1, iodevices_PUPDevice_write);
+
+static mp_obj_t iodevices_PUPDevice_reset(mp_obj_t self_in) {
+    iodevices_PUPDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    memset(self->values, 0, sizeof(self->values));
+    for (uint8_t m = 0; m < STUB_NUM_MODES; m++) {
+        self->nvalues[m] = STUB_NUM_VALUES;
+    }
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(iodevices_PUPDevice_reset_obj, iodevices_PUPDevice_reset);
+
+static const mp_rom_map_elem_t iodevices_PUPDevice_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_read),  MP_ROM_PTR(&iodevices_PUPDevice_read_obj) },
+    { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&iodevices_PUPDevice_write_obj)},
+    { MP_ROM_QSTR(MP_QSTR_info),  MP_ROM_PTR(&iodevices_PUPDevice_info_obj)},
+    { MP_ROM_QSTR(MP_QSTR_reset), MP_ROM_PTR(&iodevices_PUPDevice_reset_obj)},
+};
+static MP_DEFINE_CONST_DICT(iodevices_PUPDevice_locals_dict, iodevices_PUPDevice_locals_dict_table);
+
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_iodevices_PUPDevice,
+    MP_QSTR_PUPDevice,
+    MP_TYPE_FLAG_NONE,
+    make_new, iodevices_PUPDevice_make_new,
+    locals_dict, &iodevices_PUPDevice_locals_dict);
+
+#endif // PYBRICKS_PY_IODEVICES_PUP_DEVICE && PYBRICKS_HUB_VIRTUALHUB

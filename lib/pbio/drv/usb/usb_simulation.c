@@ -105,12 +105,8 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
     };
     usb_in_size = pbio_cobs_encode(subscribe_msg, sizeof(subscribe_msg), usb_in_buf);
 
-    #ifdef PBDRV_CONFIG_RUN_ON_CI
-    // CI and MicroPython test suite have lots of problems with stdin. It is
-    // only needed for the REPL and interactive input, so don't bother on CI.
-    return PBIO_SUCCESS;
-    #endif
-
+    // Upstream CI skipped stdin (TTY/REPL issues). hum-emu runs with CI_MODE=1
+    // but feeds bidi over a pipe, so keep reading — platform.c sets O_NONBLOCK.
     for (;;) {
 
         PBIO_OS_AWAIT_MS(state, &timer, 1);

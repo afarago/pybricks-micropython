@@ -91,19 +91,21 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
 
 #define INFINITY (1e100)
 
+// type_id is unused: virtualhub takes PUP ids from HUM_EMU_PORTS (see hum_emu_ports.c).
+// Keep per-port angle/endstop seeds for when a motor is attached via that map.
 const pbdrv_motor_driver_virtual_simulation_platform_data_t
     pbdrv_motor_driver_virtual_simulation_platform_data[PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV] = {
     {
         .port_id = PBIO_PORT_ID_A,
-        .type_id = LEGO_DEVICE_TYPE_ID_SPIKE_M_MOTOR,
-        .initial_angle = 123456,
+        .type_id = LEGO_DEVICE_TYPE_ID_NONE,
+        .initial_angle = 0,
         .initial_speed = 0,
         .endstop_angle_negative = -INFINITY,
         .endstop_angle_positive = INFINITY,
     },
     {
         .port_id = PBIO_PORT_ID_B,
-        .type_id = LEGO_DEVICE_TYPE_ID_SPIKE_M_MOTOR,
+        .type_id = LEGO_DEVICE_TYPE_ID_NONE,
         .initial_angle = 0,
         .initial_speed = 0,
         .endstop_angle_negative = -INFINITY,
@@ -111,11 +113,11 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
     },
     {
         .port_id = PBIO_PORT_ID_C,
-        .type_id = LEGO_DEVICE_TYPE_ID_SPIKE_L_MOTOR,
+        .type_id = LEGO_DEVICE_TYPE_ID_NONE,
         .initial_angle = 0,
         .initial_speed = 0,
-        .endstop_angle_negative = -142000,
-        .endstop_angle_positive = 142000,
+        .endstop_angle_negative = -INFINITY,
+        .endstop_angle_positive = INFINITY,
     },
     {
         .port_id = PBIO_PORT_ID_D,
@@ -127,7 +129,7 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
     },
     {
         .port_id = PBIO_PORT_ID_E,
-        .type_id = LEGO_DEVICE_TYPE_ID_SPIKE_S_MOTOR,
+        .type_id = LEGO_DEVICE_TYPE_ID_NONE,
         .initial_angle = 0,
         .initial_speed = 0,
         .endstop_angle_negative = -INFINITY,
@@ -135,8 +137,8 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
     },
     {
         .port_id = PBIO_PORT_ID_F,
-        .type_id = LEGO_DEVICE_TYPE_ID_SPIKE_L_MOTOR,
-        .initial_angle = 45000,
+        .type_id = LEGO_DEVICE_TYPE_ID_NONE,
+        .initial_angle = 0,
         .initial_speed = 0,
         .endstop_angle_negative = -INFINITY,
         .endstop_angle_positive = INFINITY,
@@ -167,8 +169,12 @@ int main(int argc, char **argv) {
     umm_init_heap(umm_heap, sizeof(umm_heap));
 
     #ifdef PBDRV_CONFIG_RUN_ON_CI
-    // On the CI modifying settings for stdin causes problems. The REPL isn't
-    // used on CI anyway.
+    // Skip termios (fails on pipes / breaks some CI setups). Still make stdin
+    // non-blocking so usb_simulation can poll WRITE_STDIN from hum-emu.
+    int ci_stdin_flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+    if (ci_stdin_flags != -1) {
+        (void)fcntl(STDIN_FILENO, F_SETFL, ci_stdin_flags | O_NONBLOCK);
+    }
     pbsys_main();
     return 0;
     #endif

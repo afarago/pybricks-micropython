@@ -192,6 +192,9 @@ static inline void pbio_imu_set_heading(float desired_heading) {
 }
 
 static inline void pbio_imu_get_heading_scaled(pbio_imu_heading_type_t type, pbio_angle_t *heading, int32_t *heading_rate, int32_t ctl_steps_per_degree) {
+    heading->rotations = 0;
+    heading->millidegrees = 0;
+    *heading_rate = 0;
 }
 
 static inline void pbio_orientation_imu_get_orientation(pbio_geometry_matrix_3x3_t *rotation) {
