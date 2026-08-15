@@ -16,8 +16,7 @@
 #if defined(_WIN32)
 
 pbio_os_irq_flags_t pbio_os_hook_disable_irq(void) {
-    sigset_t sigmask = {0};
-    return sigmask;
+    return 0;
 }
 
 void pbio_os_hook_enable_irq(pbio_os_irq_flags_t flags) {

@@ -91,6 +91,49 @@ void pbdrv_clock_init(void) {
 
 #endif // PBDRV_CONFIG_CLOCK_LINUX_SIGNAL
 
+#if defined(_WIN32)
+#include <windows.h>
+#include <stdbool.h>
+
+static LARGE_INTEGER qpc_freq;
+static LARGE_INTEGER qpc_start;
+static bool qpc_inited = false;
+
+static void init_qpc(void) {
+    if (!qpc_inited) {
+        QueryPerformanceFrequency(&qpc_freq);
+        QueryPerformanceCounter(&qpc_start);
+        qpc_inited = true;
+    }
+}
+
+uint32_t pbdrv_clock_get_ms(void) {
+    init_qpc();
+    LARGE_INTEGER now;
+    QueryPerformanceCounter(&now);
+    return (uint32_t)((now.QuadPart - qpc_start.QuadPart) * 1000 / qpc_freq.QuadPart);
+}
+
+uint32_t pbdrv_clock_get_100us(void) {
+    init_qpc();
+    LARGE_INTEGER now;
+    QueryPerformanceCounter(&now);
+    return (uint32_t)((now.QuadPart - qpc_start.QuadPart) * 10000 / qpc_freq.QuadPart);
+}
+
+uint32_t pbdrv_clock_get_us(void) {
+    init_qpc();
+    LARGE_INTEGER now;
+    QueryPerformanceCounter(&now);
+    return (uint32_t)((now.QuadPart - qpc_start.QuadPart) * 1000000 / qpc_freq.QuadPart);
+}
+
+#else
+
+#ifndef CLOCK_MONOTONIC_RAW
+#define CLOCK_MONOTONIC_RAW CLOCK_MONOTONIC
+#endif
+
 uint32_t pbdrv_clock_get_ms(void) {
     struct timespec time_val;
     clock_gettime(CLOCK_MONOTONIC_RAW, &time_val);
@@ -109,4 +152,7 @@ uint32_t pbdrv_clock_get_us(void) {
     return time_val.tv_sec * 1000000 + time_val.tv_nsec / 1000;
 }
 
+#endif
+
 #endif // PBDRV_CONFIG_CLOCK_LINUX
+

@@ -164,13 +164,16 @@ void pbsys_hmi_init_start_current_slot_from_signal(int sig) {
 }
 
 void pbsys_hmi_init(void) {
+    #ifdef SIGUSR1
     signal(SIGUSR1, pbsys_hmi_init_start_current_slot_from_signal);
+    #endif
     pbsys_hmi_virtual_reload_programs();
     // CI builds omit Bluetooth, so system.info() only exposes USB.
     // Bidi loops exit unless a host-connected flag is true.
     pbsys_status_set(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
     pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
 }
+
 
 void pbsys_hmi_deinit(void) {
     // For most virtual hub tests, we don't want to wait on the closing

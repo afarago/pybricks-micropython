@@ -6,7 +6,9 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef _WIN32
 #include <termios.h>
+#endif
 #include <unistd.h>
 
 #include "../../drv/motor_driver/motor_driver_virtual_simulation.h"
@@ -154,6 +156,9 @@ const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_d
     .ir_key = (const uint8_t *)"placeholderplaceholder",
 };
 
+void *UMM_MALLOC_CFG_HEAP_ADDR = NULL;
+uint32_t UMM_MALLOC_CFG_HEAP_SIZE = 0;
+
 // The 'embedded' main.
 extern void pbsys_main(void);
 
@@ -171,14 +176,17 @@ int main(int argc, char **argv) {
     #ifdef PBDRV_CONFIG_RUN_ON_CI
     // Skip termios (fails on pipes / breaks some CI setups). Still make stdin
     // non-blocking so usb_simulation can poll WRITE_STDIN from hum-emu.
+    #ifndef _WIN32
     int ci_stdin_flags = fcntl(STDIN_FILENO, F_GETFL, 0);
     if (ci_stdin_flags != -1) {
         (void)fcntl(STDIN_FILENO, F_SETFL, ci_stdin_flags | O_NONBLOCK);
     }
+    #endif
     pbsys_main();
     return 0;
     #endif
 
+    #ifndef _WIN32
     // Save the original terminal settings
     struct termios term_old, term_new;
     if (tcgetattr(STDIN_FILENO, &term_old) != 0) {
@@ -210,10 +218,12 @@ int main(int argc, char **argv) {
         printf("Failed to set non-blocking\n");
         return 0;
     }
+    #endif
 
     // Simulate running embedded main.
     pbsys_main();
 
+    #ifndef _WIN32
     // Restore stdin flags.
     if (fcntl(STDIN_FILENO, F_SETFL, stdin_flags) == -1) {
         printf("Failed to restore stdin flags\n");
@@ -224,6 +234,8 @@ int main(int argc, char **argv) {
         printf("Failed to restore terminal attributes\n");
         return 0;
     }
+    #endif
 
     return 0;
 }
+

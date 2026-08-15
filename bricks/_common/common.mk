@@ -173,12 +173,18 @@ ifeq ($(CI_MODE),1)
 CFLAGS += -DPBDRV_CONFIG_RUN_ON_CI
 endif
 CFLAGS += $(INC) -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=gnu99 $(COPT) -D_GNU_SOURCE
+CFLAGS += -include stdint.h -D__int32_t=int32_t -D__uint32_t=uint32_t -D__uint8_t=uint8_t
 ifeq ($(UNAME_S),Linux)
 LDFLAGS += -Wl,-Map=$@.map,--cref -Wl,--gc-sections
 else ifeq ($(UNAME_S),Darwin)
 LDFLAGS += -Wl,-map,$@.map -Wl,-dead_strip
+else ifneq (,$(findstring mingw,$(CC))$(findstring MINGW,$(UNAME_S))$(findstring MSYS,$(UNAME_S)))
+LDFLAGS += -Wl,-Map=$@.map,--cref -Wl,--gc-sections
 endif
 LIBS = -lm
+ifneq (,$(findstring mingw,$(CC))$(findstring MINGW,$(UNAME_S))$(findstring MSYS,$(UNAME_S)))
+LIBS += -lws2_32 -lwinmm
+endif
 ifeq ($(PB_LIB_BTSTACK),1)
 ifneq ($(CI_MODE),1)
 LIBS += $(shell pkg-config libusb-1.0 --libs)
@@ -570,7 +576,7 @@ NXOS_SRC_S = $(addprefix lib/pbio/platform/nxt/nxos/,\
 	irq.s \
 	)
 
-ifneq ($(PB_MCU_FAMILY),TIAM1808)
+ifeq ($(filter $(PB_MCU_FAMILY),native TIAM1808),)
 SRC_S += lib/pbio/platform/$(PBIO_PLATFORM)/startup.s
 endif
 
@@ -803,7 +809,7 @@ $(BUILD)/hmi_ev3_ui_credits.c: $(CREDITS_CONVERT)
 $(BUILD)/firmware.elf $(BUILD)/pybricks-virtualhub: $(LD_FILES) $(OBJ)
 	$(ECHO) "LINK $@"
 	$(Q)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
-	$(Q)$(SIZE) -A $@
+	$(Q)$(SIZE) -A $@ 2>/dev/null || $(SIZE) -A $@.exe 2>/dev/null || true
 
 $(BUILD)/firmware.stripped.elf: $(BUILD)/firmware.elf
 	$(ECHO) "STRIP $@"

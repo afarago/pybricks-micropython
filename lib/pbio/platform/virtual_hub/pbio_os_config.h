@@ -1,6 +1,10 @@
+#if defined(_WIN32)
+#include <stdint.h>
+typedef uint32_t pbio_os_irq_flags_t;
+#else
 #include <signal.h>
-
 typedef sigset_t pbio_os_irq_flags_t;
+#endif
 
 pbio_os_irq_flags_t pbio_os_hook_disable_irq(void);
 

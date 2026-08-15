@@ -5,8 +5,15 @@
 
 #if PBDRV_CONFIG_RPROC_VIRTUAL
 
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#define SOCKET_CLOSE(s) closesocket(s)
+#else
 #include <arpa/inet.h>
 #include <fcntl.h>
+#define SOCKET_CLOSE(s) close(s)
+#endif
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -33,10 +40,10 @@ void pbdrv_rproc_virtual_socket_send(const uint8_t *data, uint32_t size) {
     if (send_socket < 0) {
         return;
     }
-    ssize_t sent = sendto(send_socket, data, size, 0, (struct sockaddr *)&send_addr, sizeof(send_addr));
+    ssize_t sent = sendto(send_socket, (const char *)data, size, 0, (struct sockaddr *)&send_addr, sizeof(send_addr));
     if (sent < 0) {
         printf("send() failed\n");
-        close(send_socket);
+        SOCKET_CLOSE(send_socket);
         send_socket = -1;
     }
 }
@@ -58,7 +65,7 @@ static pbio_error_t pdrv_rproc_virtual_process_thread(pbio_os_state_t *state, vo
 
         uint8_t buf[256];
         ssize_t len;
-        while ((len = recvfrom(recv_socket, buf, sizeof(buf), 0, NULL, NULL)) > 0) {
+        while ((len = recvfrom(recv_socket, (char *)buf, sizeof(buf), 0, NULL, NULL)) > 0) {
             // REVISIT: Generalize telemetry receipt protocol. Assume button state.
             if (len == 4) {
                 button_state = pbio_get_uint32_le(buf);
@@ -75,6 +82,11 @@ void pbdrv_rproc_init(void) {
         return;
     }
 
+    #ifdef _WIN32
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+    #endif
+
     // Setup sending socket.
     send_socket = socket(AF_INET, SOCK_DGRAM, 0);
     if (send_socket < 0) {
@@ -85,7 +97,7 @@ void pbdrv_rproc_init(void) {
     send_addr.sin_port = htons(SEND_PORT);
     if (inet_pton(AF_INET, "127.0.0.1", &send_addr.sin_addr) <= 0) {
         printf("inet_pton() failed\n");
-        close(send_socket);
+        SOCKET_CLOSE(send_socket);
         send_socket = -1;
         return;
     }
@@ -101,13 +113,19 @@ void pbdrv_rproc_init(void) {
     recv_addr.sin_port = htons(RECV_PORT);
     if (bind(recv_socket, (struct sockaddr *)&recv_addr, sizeof(recv_addr)) < 0) {
         printf("bind() failed\n");
-        close(recv_socket);
+        SOCKET_CLOSE(recv_socket);
         recv_socket = -1;
         return;
     }
+
     // Don't block recvfrom.
+    #ifdef _WIN32
+    u_long mode = 1;
+    ioctlsocket(recv_socket, FIONBIO, &mode);
+    #else
     int flags = fcntl(recv_socket, F_GETFL, 0);
     fcntl(recv_socket, F_SETFL, flags | O_NONBLOCK);
+    #endif
 
     // Starts receiving.
     static pbio_os_process_t process;
