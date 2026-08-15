@@ -44,7 +44,13 @@ void pbdrv_sound_stop(void);
 
 #else // PBDRV_CONFIG_SOUND
 
+#include <stdio.h>
+
 static inline void pbdrv_beep_start(uint32_t frequency, uint16_t sample_attenuator) {
+    (void)frequency;
+    (void)sample_attenuator;
+    putchar('\a');
+    fflush(stdout);
 }
 
 static inline void pbdrv_sound_start(const uint16_t *data, uint32_t length, uint32_t sample_rate) {

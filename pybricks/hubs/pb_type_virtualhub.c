@@ -33,6 +33,10 @@ typedef struct _hubs_VirtualHub_obj_t {
     #endif
     mp_obj_t light;
     mp_obj_t screen;
+    mp_obj_t display;
+    #if PYBRICKS_PY_COMMON_SPEAKER
+    mp_obj_t speaker;
+    #endif
     mp_obj_t system;
     #if PYBRICKS_PY_MESSAGING_BLE_RADIO_OLD
     mp_obj_t ble;
@@ -91,6 +95,10 @@ static mp_obj_t hubs_VirtualHub_make_new(const mp_obj_type_t *type, size_t n_arg
     // FIXME: Implement lights.
     // self->light = common_ColorLight_internal_obj_new(pbsys_status_light_main);
     self->screen = pb_type_Image_display_obj_new();
+    self->display = self->screen;
+    #if PYBRICKS_PY_COMMON_SPEAKER
+    self->speaker = mp_call_function_0(MP_OBJ_FROM_PTR(&pb_type_Speaker));
+    #endif
     self->system = MP_OBJ_FROM_PTR(&pb_type_System);
     return MP_OBJ_FROM_PTR(self);
 }
@@ -106,6 +114,10 @@ static const pb_attr_dict_entry_t hubs_VirtualHub_attr_dict[] = {
     #endif
     // PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, hubs_VirtualHub_obj_t, light),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_screen, hubs_VirtualHub_obj_t, screen),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_display, hubs_VirtualHub_obj_t, display),
+    #if PYBRICKS_PY_COMMON_SPEAKER
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_speaker, hubs_VirtualHub_obj_t, speaker),
+    #endif
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_system, hubs_VirtualHub_obj_t, system),
     PB_ATTR_DICT_SENTINEL
 };
