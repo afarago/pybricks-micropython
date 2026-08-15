@@ -183,6 +183,11 @@ typedef long mp_off_t;
     } while (0);
 
 // We need to provide a declaration/definition of alloca()
+#if defined(_WIN32)
+#include <malloc.h>
+#else
 #include <alloca.h>
+#endif
 
 #define MP_STATE_PORT MP_STATE_VM
+

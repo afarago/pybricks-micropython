@@ -2,14 +2,37 @@
 // Copyright (c) 2025 The Pybricks Authors
 
 #include <signal.h>
+#ifndef _WIN32
 #include <sys/select.h>
+#else
+#include <windows.h>
+#endif
 
 #include <pbio/os.h>
 
 #include "py/runtime.h"
 #include "py/mphal.h"
 
-#if PBDRV_CONFIG_CLOCK_TEST
+#if defined(_WIN32)
+
+pbio_os_irq_flags_t pbio_os_hook_disable_irq(void) {
+    sigset_t sigmask = {0};
+    return sigmask;
+}
+
+void pbio_os_hook_enable_irq(pbio_os_irq_flags_t flags) {
+    (void)flags;
+}
+
+void pbio_os_hook_wait_for_interrupt(pbio_os_irq_flags_t flags) {
+    (void)flags;
+    MP_THREAD_GIL_EXIT();
+    Sleep(1);
+    MP_THREAD_GIL_ENTER();
+    pbio_os_request_poll();
+}
+
+#elif PBDRV_CONFIG_CLOCK_TEST
 #include <pbdrv/../../drv/clock/clock_test.h>
 
 pbio_os_irq_flags_t pbio_os_hook_disable_irq(void) {
@@ -59,3 +82,4 @@ void pbio_os_hook_wait_for_interrupt(pbio_os_irq_flags_t flags) {
 }
 
 #endif
+
