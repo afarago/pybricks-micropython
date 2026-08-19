@@ -109,7 +109,7 @@ void *pb_type_device_get_data(mp_obj_t self_in, uint8_t mode) {
             stub_data[2] = (int16_t)(pct * 100.0f);
         }
         const char *color_name = hum_emu_value_get_str(port_id, "color");
-        if (color_name) {
+        if (color_name && (!hum_emu_value_has(port_id, "reflection") || strcmp(color_name, "NONE") != 0)) {
             if (mode == LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__SHSV
                 || mode == LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__HSV
                 || mode == LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__AMBI) {
