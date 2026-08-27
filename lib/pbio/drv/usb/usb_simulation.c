@@ -45,8 +45,8 @@ pbio_error_t pbdrv_usb_tx_chunk(pbio_os_state_t *state, const uint8_t *data, uin
 
     if (msg_size >= 2 && msg[0] == PBIO_PYBRICKS_IN_EP_MSG_EVENT &&
         msg[1] == PBIO_PYBRICKS_EVENT_WRITE_STDOUT) {
-        int ret = write(STDOUT_FILENO, &msg[2], msg_size - 2);
-        (void)ret;
+        fwrite(&msg[2], 1, msg_size - 2, stdout);
+        fflush(stdout);
 
         #ifdef PBDRV_CONFIG_RPROC_VIRTUAL
         pbdrv_rproc_virtual_socket_send(&msg[2], msg_size - 2);

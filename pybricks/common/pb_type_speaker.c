@@ -55,7 +55,7 @@ static mp_obj_t pb_type_Speaker_volume(size_t n_args, const mp_obj_t *pos_args, 
     self->volume = pb_obj_get_pct(volume_in);
 
     // exponential amplification (human ear perceives sample amplitude in a logarithmic way)
-    self->sample_attenuator = (powf(10, self->volume / 100.0F) - 1) / 9 * INT16_MAX;
+    self->sample_attenuator = (uint16_t)(((powf(10, self->volume / 100.0F) - 1) / 9) * INT16_MAX);
 
     return mp_const_none;
 }

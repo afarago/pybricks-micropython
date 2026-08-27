@@ -9,7 +9,7 @@
 #define PBDRV_CONFIG_BLOCK_DEVICE_TEST                      (1)
 
 // Use Bluetooth simulation locally.
-#ifndef PBDRV_CONFIG_RUN_ON_CI
+#if !defined(PBDRV_CONFIG_RUN_ON_CI) && !defined(__EMSCRIPTEN__)
 #define PBDRV_CONFIG_BLUETOOTH                              (1)
 #define PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS      (2)
 #define PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS              (2)

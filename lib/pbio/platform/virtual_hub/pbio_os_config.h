@@ -1,4 +1,4 @@
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(__EMSCRIPTEN__)
 #include <stdint.h>
 typedef uint32_t pbio_os_irq_flags_t;
 #else

@@ -26,6 +26,15 @@
 #include "program_stop.h"
 #include "storage.h"
 
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+EM_JS(void, pybricks_wasm_notify_complete, (int status), {
+    if (Module && typeof Module.onProgramComplete === 'function') {
+        Module.onProgramComplete(status);
+    }
+});
+#endif
+
 // Singleton with information about the currently (or soon) active program.
 static pbsys_main_program_t program;
 
@@ -112,6 +121,10 @@ void pbsys_main(void) {
         // Run the main application.
         pbio_main_start_application_resources();
         pbsys_main_run_program(&program);
+
+        #if defined(__EMSCRIPTEN__)
+        pybricks_wasm_notify_complete(0);
+        #endif
 
         // Stop motors, user animations, user bluetooth activity, etc.
         err = pbio_main_stop_application_resources();

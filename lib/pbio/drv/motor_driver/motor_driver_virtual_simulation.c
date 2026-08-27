@@ -282,4 +282,31 @@ void pbdrv_motor_driver_init(void) {
     pbio_os_process_start(&process, pbdrv_motor_driver_virtual_simulation_process_thread, NULL);
 }
 
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+
+EMSCRIPTEN_KEEPALIVE
+double pbdrv_motor_simulation_get_angle(uint8_t port_index) {
+    if (port_index < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV) {
+        return motor_driver_devs[port_index].angle;
+    }
+    return 0.0;
+}
+
+EMSCRIPTEN_KEEPALIVE
+double pbdrv_motor_simulation_get_speed(uint8_t port_index) {
+    if (port_index < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV) {
+        return motor_driver_devs[port_index].speed;
+    }
+    return 0.0;
+}
+
+EMSCRIPTEN_KEEPALIVE
+void pbdrv_motor_simulation_set_angle(uint8_t port_index, double angle) {
+    if (port_index < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV) {
+        motor_driver_devs[port_index].angle = angle;
+    }
+}
+#endif
+
 #endif // PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION

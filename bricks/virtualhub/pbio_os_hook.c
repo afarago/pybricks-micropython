@@ -13,7 +13,26 @@
 #include "py/runtime.h"
 #include "py/mphal.h"
 
-#if defined(_WIN32)
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+
+pbio_os_irq_flags_t pbio_os_hook_disable_irq(void) {
+    return 0;
+}
+
+void pbio_os_hook_enable_irq(pbio_os_irq_flags_t flags) {
+    (void)flags;
+}
+
+void pbio_os_hook_wait_for_interrupt(pbio_os_irq_flags_t flags) {
+    (void)flags;
+    MP_THREAD_GIL_EXIT();
+    emscripten_sleep(1);
+    MP_THREAD_GIL_ENTER();
+    pbio_os_request_poll();
+}
+
+#elif defined(_WIN32)
 
 pbio_os_irq_flags_t pbio_os_hook_disable_irq(void) {
     return 0;

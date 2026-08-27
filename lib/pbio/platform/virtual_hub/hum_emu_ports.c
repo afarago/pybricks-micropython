@@ -12,9 +12,25 @@
 // Empty until HUM_EMU_PORTS / live file is set (hum-emu always passes a map).
 static uint16_t port_type_ids[HUM_EMU_NUM_PORTS];
 
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+
+EMSCRIPTEN_KEEPALIVE
+void hum_emu_ports_set(uint8_t port_index, uint16_t type_id) {
+    if (port_index < HUM_EMU_NUM_PORTS) {
+        port_type_ids[port_index] = type_id;
+    }
+}
+#endif
+
 static void hum_emu_ports_parse(const char *env) {
     memset(port_type_ids, 0, sizeof(port_type_ids));
     if (!env || !*env) {
+        #if defined(__EMSCRIPTEN__)
+        for (int i = 0; i < HUM_EMU_NUM_PORTS; i++) {
+            port_type_ids[i] = 48; // LEGO_DEVICE_TYPE_ID_SPIKE_M_MOTOR
+        }
+        #endif
         return;
     }
 

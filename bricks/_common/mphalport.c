@@ -5,6 +5,7 @@
 // Contains the MicroPython HAL for STM32-based Pybricks ports.
 
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <pbdrv/clock.h>
@@ -68,9 +69,15 @@ mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
             str += size;
             remaining -= size;
         } else if (err != PBIO_ERROR_AGAIN) {
+            #if defined(__EMSCRIPTEN__)
+            fwrite(str, 1, remaining, stdout);
+            fflush(stdout);
+            return len;
+            #else
             // Ignoring error for now. This means stdout is lost if Bluetooth/USB
             // is disconnected.
             return len - remaining;
+            #endif
         }
 
         // Allow long prints to be interrupted.

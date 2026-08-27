@@ -6,14 +6,16 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__)
 #include <termios.h>
 #endif
 #include <unistd.h>
 
 #include "../../drv/motor_driver/motor_driver_virtual_simulation.h"
+#if PBDRV_CONFIG_BLUETOOTH_BTSTACK
 #include "../../drv/bluetooth/bluetooth_btstack.h"
 #include "../../drv/bluetooth/bluetooth_btstack_posix.h"
+#endif
 
 #include "pbio_os_config.h"
 
@@ -147,6 +149,7 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
     },
 };
 
+#if PBDRV_CONFIG_BLUETOOTH_BTSTACK
 const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_data = {
     .transport_instance = pbdrv_bluetooth_btstack_posix_transport_instance,
     .transport_config = pbdrv_bluetooth_btstack_posix_transport_config,
@@ -155,6 +158,7 @@ const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_d
     .er_key = (const uint8_t *)"placeholderplaceholder",
     .ir_key = (const uint8_t *)"placeholderplaceholder",
 };
+#endif
 
 void *UMM_MALLOC_CFG_HEAP_ADDR = NULL;
 uint32_t UMM_MALLOC_CFG_HEAP_SIZE = 0;
@@ -173,20 +177,20 @@ int main(int argc, char **argv) {
     static uint8_t umm_heap[1024 * 1024 * 2];
     umm_init_heap(umm_heap, sizeof(umm_heap));
 
-    #ifdef PBDRV_CONFIG_RUN_ON_CI
-    // Skip termios (fails on pipes / breaks some CI setups). Still make stdin
-    // non-blocking so usb_simulation can poll WRITE_STDIN from hum-emu.
-    #ifndef _WIN32
+    #if defined(PBDRV_CONFIG_RUN_ON_CI) || defined(__EMSCRIPTEN__)
+    // Skip termios (fails on pipes / breaks some CI setups or Emscripten).
+    #if !defined(_WIN32) && !defined(__EMSCRIPTEN__)
     int ci_stdin_flags = fcntl(STDIN_FILENO, F_GETFL, 0);
     if (ci_stdin_flags != -1) {
         (void)fcntl(STDIN_FILENO, F_SETFL, ci_stdin_flags | O_NONBLOCK);
     }
     #endif
     pbsys_main();
+    exit(0);
     return 0;
     #endif
 
-    #ifndef _WIN32
+    #if !defined(_WIN32) && !defined(__EMSCRIPTEN__)
     // Save the original terminal settings
     struct termios term_old, term_new;
     if (tcgetattr(STDIN_FILENO, &term_old) != 0) {
@@ -223,7 +227,7 @@ int main(int argc, char **argv) {
     // Simulate running embedded main.
     pbsys_main();
 
-    #ifndef _WIN32
+    #if !defined(_WIN32) && !defined(__EMSCRIPTEN__)
     // Restore stdin flags.
     if (fcntl(STDIN_FILENO, F_SETFL, stdin_flags) == -1) {
         printf("Failed to restore stdin flags\n");

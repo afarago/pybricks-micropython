@@ -13,7 +13,11 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#if defined(__has_include)
+#if __has_include(<sys/cdefs.h>)
 #include <sys/cdefs.h>
+#endif
+#endif
 
 /**
  * Converts @p str to a quoted string.

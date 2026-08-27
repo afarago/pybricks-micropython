@@ -40,6 +40,10 @@ SRC = $(addprefix $(MICROPYTHON_DIR)/, \
 	py/emitnxtensa.c \
 	py/emitinlinextensa.c \
 	py/emitnxtensawin.c \
+	py/asmrv32.c \
+	py/emitnrv32.c \
+	py/emitinlinerv32.c \
+	py/emitndebug.c \
 	py/formatfloat.c \
 	py/parsenumbase.c \
 	py/parsenum.c \
@@ -112,7 +116,7 @@ SRC = $(addprefix $(MICROPYTHON_DIR)/, \
 	py/modmicropython.c \
 	py/modstruct.c \
 	py/modsys.c \
-	py/moduerrno.c \
+	py/moderrno.c \
 	py/modthread.c \
 	py/vm.c \
 	py/bc.c \
@@ -134,7 +138,7 @@ COPT += -O0 -gsource-map --source-map-base http://localhost:8000/mpy-cross/
 else
 COPT += -Oz
 endif
-COPT += -s MODULARIZE=1 -s EXPORT_NAME=MpyCross -s EXIT_RUNTIME=1
+COPT += -s MODULARIZE=1 -s EXPORT_NAME=MpyCross -s EXPORT_ES6=1 -s EXIT_RUNTIME=1
 
 
 all: $(BUILD)/mpy-cross-v6.js

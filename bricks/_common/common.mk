@@ -174,7 +174,13 @@ CFLAGS += -DPBDRV_CONFIG_RUN_ON_CI
 endif
 CFLAGS += $(INC) -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=gnu99 $(COPT) -D_GNU_SOURCE
 CFLAGS += -include stdint.h -D__int32_t=int32_t -D__uint32_t=uint32_t -D__uint8_t=uint8_t
-ifeq ($(UNAME_S),Linux)
+ifneq (,$(findstring emcc,$(CC)))
+CFLAGS += -Wno-error -std=gnu11
+LDFLAGS += -s WASM=1 -s MODULARIZE=1 -s EXPORT_NAME=PybricksWasm -s EXPORT_ES6=1 -s ASYNCIFY=1 -s ALLOW_MEMORY_GROWTH=1 \
+           -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","getValue","setValue","FS","callMain"]' \
+           -s EXPORTED_FUNCTIONS='["_main","_free","_malloc"]' \
+           -s STACK_SIZE=1048576 -s INITIAL_MEMORY=16777216
+else ifeq ($(UNAME_S),Linux)
 LDFLAGS += -Wl,-Map=$@.map,--cref -Wl,--gc-sections
 else ifeq ($(UNAME_S),Darwin)
 LDFLAGS += -Wl,-map,$@.map -Wl,-dead_strip
@@ -279,7 +285,9 @@ CFLAGS += -DSTM32_LL_USART_H='<stm32$(PB_MCU_SERIES_LCASE)xx_ll_usart.h>'
 endif
 endif
 
+ifneq ($(PB_MCU_FAMILY),native)
 LIBS += "$(shell $(CC) $(CFLAGS) -print-libgcc-file-name)"
+endif
 
 # Sources and libraries common to all pybricks bricks
 

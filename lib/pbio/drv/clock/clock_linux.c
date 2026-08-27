@@ -128,6 +128,21 @@ uint32_t pbdrv_clock_get_us(void) {
     return (uint32_t)((now.QuadPart - qpc_start.QuadPart) * 1000000 / qpc_freq.QuadPart);
 }
 
+#elif defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+
+uint32_t pbdrv_clock_get_ms(void) {
+    return (uint32_t)emscripten_get_now();
+}
+
+uint32_t pbdrv_clock_get_100us(void) {
+    return (uint32_t)(emscripten_get_now() * 10.0);
+}
+
+uint32_t pbdrv_clock_get_us(void) {
+    return (uint32_t)(emscripten_get_now() * 1000.0);
+}
+
 #else
 
 #ifndef CLOCK_MONOTONIC_RAW

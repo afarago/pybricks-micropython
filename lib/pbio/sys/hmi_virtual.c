@@ -102,14 +102,14 @@ static void load_program(const char *path) {
  */
 static pbio_error_t pbsys_hmi_await_program_selection_one_off(void) {
 
-    pbio_os_run_processes_and_wait_for_event();
-
     // With this HMI, we run a script once and then exit.
     static bool ran_once = false;
     if (ran_once) {
         return PBIO_ERROR_CANCELED;
     }
     ran_once = true;
+
+    pbio_os_run_processes_and_wait_for_event();
 
     pbio_pybricks_user_program_id_t id = pbsys_hmi_num_programs ?
         PBIO_PYBRICKS_USER_PROGRAM_ID_FIRST_SLOT :
@@ -304,9 +304,13 @@ static pbio_error_t pbsys_hmi_await_program_selection_interactive(void) {
  * run interactive menu. Press numpad keys in the animation to operate it.
  */
 pbio_error_t pbsys_hmi_await_program_selection(void) {
+    #if defined(__EMSCRIPTEN__)
+    return pbsys_hmi_await_program_selection_one_off();
+    #else
     return pbsys_hmi_num_programs <= 1 ?
            pbsys_hmi_await_program_selection_one_off() :
            pbsys_hmi_await_program_selection_interactive();
+    #endif
 }
 
 #endif // PBSYS_CONFIG_HMI_VIRTUAL
