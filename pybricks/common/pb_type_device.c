@@ -73,17 +73,19 @@ void *pb_type_device_get_data(mp_obj_t self_in, uint8_t mode) {
             stub_data[0] = lego_ghost_hub_value_get(port_id, "touched", 0.0f) >= 0.5f
                 ? (int16_t)(released + 20)
                 : released;
-        } else if (lego_ghost_hub_value_has(port_id, "distance")) {
+        } else if (mode == LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__FRAW && lego_ghost_hub_value_has(port_id, "distance")) {
             // ForceSensor.distance uses same FRAW scaling (~6.67mm span).
             float dist_mm = lego_ghost_hub_value_get(port_id, "distance", 0.0f);
             float raw_f = (float)released + dist_mm * (float)(end - released) / 6.67f;
-            if (raw_f < 0) {
-                raw_f = 0;
-            }
-            if (raw_f > 30000) {
-                raw_f = 30000;
-            }
+            if (raw_f < 0) raw_f = 0;
+            if (raw_f > 30000) raw_f = 30000;
             stub_data[0] = (int16_t)raw_f;
+        }
+        if (lego_ghost_hub_value_has(port_id, "distance") && (mode == LEGO_DEVICE_MODE_PUP_ULTRASONIC_SENSOR__DISTL || mode == LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX)) {
+            float dist_mm = lego_ghost_hub_value_get(port_id, "distance", 2000.0f);
+            if (dist_mm < 0) dist_mm = 0;
+            if (dist_mm > 2000) dist_mm = 2000;
+            stub_data[0] = (int16_t)dist_mm;
         }
 
         if (lego_ghost_hub_value_has(port_id, "reflection")) {
@@ -109,7 +111,7 @@ void *pb_type_device_get_data(mp_obj_t self_in, uint8_t mode) {
             stub_data[2] = (int16_t)(pct * 100.0f);
         }
         const char *color_name = lego_ghost_hub_value_get_str(port_id, "color");
-        if (color_name && (!lego_ghost_hub_value_has(port_id, "reflection") || strcmp(color_name, "NONE") != 0)) {
+        if (color_name) {
             if (mode == LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__SHSV
                 || mode == LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__HSV
                 || mode == LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__AMBI) {
@@ -119,7 +121,7 @@ void *pb_type_device_get_data(mp_obj_t self_in, uint8_t mode) {
                     stub_data[1] = shsv[1];
                     stub_data[2] = shsv[2];
                 }
-            } else {
+            } else if (!lego_ghost_hub_value_has(port_id, "reflection")) {
                 // RGB_I / REFLT / COLOR and other reflected-light modes
                 int16_t rgb[3];
                 if (lego_ghost_hub_color_rgb(color_name, rgb)) {

@@ -15,6 +15,8 @@
 /** Re-read LEGO_GHOST_HUB_VALUES_LIVE (or env). */
 void lego_ghost_hub_values_reload(void);
 
+void lego_ghost_hub_values_set(const char *text);
+
 /**
  * Get a float attr for a port (e.g. "force", "reflection").
  * Returns default_value if unset or if the attr is a string.

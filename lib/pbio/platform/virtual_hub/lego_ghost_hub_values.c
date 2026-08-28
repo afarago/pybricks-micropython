@@ -1,3 +1,4 @@
+static void lego_ghost_hub_values_parse(const char *text);
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 The Pybricks Authors / lego-ghost-hub
 
@@ -67,6 +68,20 @@ static void lego_ghost_hub_normalize_color_token(char *dst, size_t dstlen, const
         dst[dstlen - 1] = '\0';
     }
 }
+
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+
+static bool values_set_via_js = false;
+
+EMSCRIPTEN_KEEPALIVE
+void lego_ghost_hub_values_set(const char *text) {
+    if (text) {
+        lego_ghost_hub_values_parse(text);
+        values_set_via_js = true;
+    }
+}
+#endif
 
 static void lego_ghost_hub_values_parse(const char *text) {
     lego_ghost_hub_values_clear();
@@ -167,6 +182,11 @@ static bool lego_ghost_hub_values_read_file(const char *path, char *buf, size_t 
 }
 
 void lego_ghost_hub_values_reload(void) {
+#if defined(__EMSCRIPTEN__)
+    if (values_set_via_js) {
+        return;
+    }
+#endif
     const char *live = getenv("LEGO_GHOST_HUB_VALUES_LIVE");
     if (live && *live) {
         char buf[512];
