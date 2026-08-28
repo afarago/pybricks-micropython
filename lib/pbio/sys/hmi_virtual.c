@@ -66,7 +66,7 @@ static void load_program(const char *path) {
     uint8_t program_buf[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
     uint32_t program_size = 0;
 
-    // Precompiled multi-mpy6 from hum-emu / pybricksdev --bin.
+    // Precompiled multi-mpy6 from lego-ghost-hub / pybricksdev --bin.
     if (path_has_suffix(path, ".bin") || path_has_suffix(path, ".mpy6")) {
         if (!load_program_blob(path, program_buf, &program_size)) {
             printf("Error reading program blob\n");

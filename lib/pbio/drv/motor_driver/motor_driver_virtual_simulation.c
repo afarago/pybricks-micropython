@@ -17,8 +17,8 @@
 
 #include "motor_driver_virtual_simulation.h"
 
-#if PBDRV_CONFIG_HUM_EMU_PORTS
-#include "hum_emu_ports.h"
+#if PBDRV_CONFIG_LEGO_GHOST_HUB_PORTS
+#include "lego_ghost_hub_ports.h"
 #endif
 
 typedef struct _pbio_simulation_model_t {
@@ -50,7 +50,7 @@ struct _pbdrv_motor_driver_dev_t {
     double torque;
     const pbio_simulation_model_t *model;
     const pbdrv_motor_driver_virtual_simulation_platform_data_t *pdata;
-    /** Runtime type from HUM_EMU_PORTS (may differ from pdata->type_id). */
+    /** Runtime type from LEGO_GHOST_HUB_PORTS (may differ from pdata->type_id). */
     lego_device_type_id_t type_id;
     pbdrv_counter_dev_t counter;
 };
@@ -95,9 +95,9 @@ static void simulation_init(void) {
         driver->torque = 0;
         driver->voltage = 0;
 
-        // Prefer HUM_EMU_PORTS (hum-emu). Ignore pdata->type_id on virtualhub.
-        #if PBDRV_CONFIG_HUM_EMU_PORTS
-        driver->type_id = hum_emu_port_motor_type_id(driver->pdata->port_id);
+        // Prefer LEGO_GHOST_HUB_PORTS (lego-ghost-hub). Ignore pdata->type_id on virtualhub.
+        #if PBDRV_CONFIG_LEGO_GHOST_HUB_PORTS
+        driver->type_id = lego_ghost_hub_port_motor_type_id(driver->pdata->port_id);
         #else
         driver->type_id = driver->pdata->type_id;
         #endif
@@ -112,9 +112,9 @@ static void simulation_init(void) {
 }
 
 static void pbdrv_motor_driver_refresh_type(pbdrv_motor_driver_dev_t *driver) {
-    #if PBDRV_CONFIG_HUM_EMU_PORTS
-    // Hot-reload: HUM_EMU_PORTS_LIVE may change while the program runs.
-    driver->type_id = hum_emu_port_motor_type_id(driver->pdata->port_id);
+    #if PBDRV_CONFIG_LEGO_GHOST_HUB_PORTS
+    // Hot-reload: LEGO_GHOST_HUB_PORTS_LIVE may change while the program runs.
+    driver->type_id = lego_ghost_hub_port_motor_type_id(driver->pdata->port_id);
     if (driver->type_id != LEGO_DEVICE_TYPE_ID_NONE) {
         driver->model = &model_technic_m_angular;
     } else {

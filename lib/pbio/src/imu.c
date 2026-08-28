@@ -23,7 +23,7 @@
 #include <pbsys/storage_settings.h>
 
 #if PBDRV_CONFIG_IMU_VIRTUAL
-#include "hum_emu_imu.h"
+#include "lego_ghost_hub_imu.h"
 #endif
 
 #if PBIO_CONFIG_IMU
@@ -587,7 +587,7 @@ void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values, bool calibrated)
     (void)calibrated;
     values->x = 0.0f;
     values->y = 0.0f;
-    values->z = -hum_emu_imu_yaw_rate();
+    values->z = -lego_ghost_hub_imu_yaw_rate();
     #else
     pbio_geometry_xyz_t *angular_velocity = calibrated ? &angular_velocity_calibrated : &angular_velocity_uncalibrated;
     pbio_geometry_vector_map(&pbio_imu_base_orientation, angular_velocity, values);
@@ -605,8 +605,8 @@ void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values, bool calibrated) {
     #if PBDRV_CONFIG_IMU_VIRTUAL
     (void)calibrated;
     const float deg2rad = 0.01745329252f;
-    float pitch = hum_emu_imu_pitch() * deg2rad;
-    float roll = hum_emu_imu_roll() * deg2rad;
+    float pitch = lego_ghost_hub_imu_pitch() * deg2rad;
+    float roll = lego_ghost_hub_imu_roll() * deg2rad;
     const float g = 9810.0f;
     pbio_geometry_xyz_t body = {
         .x = -sinf(pitch) * g,
@@ -712,10 +712,10 @@ static float heading_offset_3d = 0;
 float pbio_imu_get_heading(pbio_imu_heading_type_t type) {
 
     #if PBDRV_CONFIG_IMU_VIRTUAL
-    // Absolute yaw from hum-emu REPL / HUM_EMU_IMU_LIVE (ignore reset offset so
+    // Absolute yaw from lego-ghost-hub REPL / LEGO_GHOST_HUB_IMU_LIVE (ignore reset offset so
     // `imu 90` and bidi heading stay aligned after hub construction).
     (void)type;
-    return hum_emu_imu_yaw();
+    return lego_ghost_hub_imu_yaw();
     #else
 
     float correction = (persistent_settings && (persistent_settings->flags & PBIO_IMU_SETTINGS_FLAGS_HEADING_CORRECTION_1D_SET)) ?

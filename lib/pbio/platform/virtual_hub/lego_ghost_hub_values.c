@@ -1,36 +1,36 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2026 The Pybricks Authors / hum-emu
+// Copyright (c) 2026 The Pybricks Authors / lego-ghost-hub
 
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "hum_emu_values.h"
+#include "lego_ghost_hub_values.h"
 
-#define HUM_EMU_NUM_PORTS 6
-#define HUM_EMU_MAX_ATTRS 12
-#define HUM_EMU_ATTR_LEN 24
-#define HUM_EMU_STR_LEN 24
+#define LEGO_GHOST_HUB_NUM_PORTS 6
+#define LEGO_GHOST_HUB_MAX_ATTRS 12
+#define LEGO_GHOST_HUB_ATTR_LEN 24
+#define LEGO_GHOST_HUB_STR_LEN 24
 
 typedef struct {
-    char name[HUM_EMU_ATTR_LEN];
+    char name[LEGO_GHOST_HUB_ATTR_LEN];
     float value;
-    char str[HUM_EMU_STR_LEN];
+    char str[LEGO_GHOST_HUB_STR_LEN];
     bool is_str;
     bool set;
-} hum_emu_attr_t;
+} lego_ghost_hub_attr_t;
 
-static hum_emu_attr_t attrs[HUM_EMU_NUM_PORTS][HUM_EMU_MAX_ATTRS];
+static lego_ghost_hub_attr_t attrs[LEGO_GHOST_HUB_NUM_PORTS][LEGO_GHOST_HUB_MAX_ATTRS];
 
-static void hum_emu_values_clear(void) {
+static void lego_ghost_hub_values_clear(void) {
     memset(attrs, 0, sizeof(attrs));
 }
 
-static hum_emu_attr_t *hum_emu_attr_slot(int port_idx, const char *name, bool create) {
-    hum_emu_attr_t *empty = NULL;
-    for (int i = 0; i < HUM_EMU_MAX_ATTRS; i++) {
-        hum_emu_attr_t *a = &attrs[port_idx][i];
+static lego_ghost_hub_attr_t *lego_ghost_hub_attr_slot(int port_idx, const char *name, bool create) {
+    lego_ghost_hub_attr_t *empty = NULL;
+    for (int i = 0; i < LEGO_GHOST_HUB_MAX_ATTRS; i++) {
+        lego_ghost_hub_attr_t *a = &attrs[port_idx][i];
         if (a->set && strcmp(a->name, name) == 0) {
             return a;
         }
@@ -39,14 +39,14 @@ static hum_emu_attr_t *hum_emu_attr_slot(int port_idx, const char *name, bool cr
         }
     }
     if (create && empty) {
-        strncpy(empty->name, name, HUM_EMU_ATTR_LEN - 1);
-        empty->name[HUM_EMU_ATTR_LEN - 1] = '\0';
+        strncpy(empty->name, name, LEGO_GHOST_HUB_ATTR_LEN - 1);
+        empty->name[LEGO_GHOST_HUB_ATTR_LEN - 1] = '\0';
         return empty;
     }
     return NULL;
 }
 
-static void hum_emu_normalize_color_token(char *dst, size_t dstlen, const char *src) {
+static void lego_ghost_hub_normalize_color_token(char *dst, size_t dstlen, const char *src) {
     // Accept WHITE / white / Color.WHITE / Color.white / GREY→GRAY
     const char *p = src;
     if ((p[0] == 'C' || p[0] == 'c')
@@ -68,8 +68,8 @@ static void hum_emu_normalize_color_token(char *dst, size_t dstlen, const char *
     }
 }
 
-static void hum_emu_values_parse(const char *text) {
-    hum_emu_values_clear();
+static void lego_ghost_hub_values_parse(const char *text) {
+    lego_ghost_hub_values_clear();
     if (!text || !*text) {
         return;
     }
@@ -95,9 +95,9 @@ static void hum_emu_values_parse(const char *text) {
         }
         p++; // skip '.'
 
-        char name[HUM_EMU_ATTR_LEN];
+        char name[LEGO_GHOST_HUB_ATTR_LEN];
         int ni = 0;
-        while (*p && *p != '=' && *p != ',' && ni < HUM_EMU_ATTR_LEN - 1) {
+        while (*p && *p != '=' && *p != ',' && ni < LEGO_GHOST_HUB_ATTR_LEN - 1) {
             name[ni++] = *p++;
         }
         name[ni] = '\0';
@@ -109,7 +109,7 @@ static void hum_emu_values_parse(const char *text) {
         }
         p++; // skip '='
 
-        hum_emu_attr_t *slot = hum_emu_attr_slot(letter - 'A', name, true);
+        lego_ghost_hub_attr_t *slot = lego_ghost_hub_attr_slot(letter - 'A', name, true);
         if (!slot) {
             while (*p && *p != ',') {
                 p++;
@@ -127,9 +127,9 @@ static void hum_emu_values_parse(const char *text) {
             slot->set = true;
             p = end;
         } else {
-            char token[HUM_EMU_STR_LEN];
+            char token[LEGO_GHOST_HUB_STR_LEN];
             int ti = 0;
-            while (*p && *p != ',' && ti < HUM_EMU_STR_LEN - 1) {
+            while (*p && *p != ',' && ti < LEGO_GHOST_HUB_STR_LEN - 1) {
                 if (*p != ' ') {
                     token[ti++] = *p;
                 }
@@ -137,10 +137,10 @@ static void hum_emu_values_parse(const char *text) {
             }
             token[ti] = '\0';
             if (strcmp(name, "color") == 0) {
-                hum_emu_normalize_color_token(slot->str, sizeof(slot->str), token);
+                lego_ghost_hub_normalize_color_token(slot->str, sizeof(slot->str), token);
             } else {
-                strncpy(slot->str, token, HUM_EMU_STR_LEN - 1);
-                slot->str[HUM_EMU_STR_LEN - 1] = '\0';
+                strncpy(slot->str, token, LEGO_GHOST_HUB_STR_LEN - 1);
+                slot->str[LEGO_GHOST_HUB_STR_LEN - 1] = '\0';
             }
             slot->is_str = true;
             slot->value = 0;
@@ -152,7 +152,7 @@ static void hum_emu_values_parse(const char *text) {
     }
 }
 
-static bool hum_emu_values_read_file(const char *path, char *buf, size_t buflen) {
+static bool lego_ghost_hub_values_read_file(const char *path, char *buf, size_t buflen) {
     FILE *fp = fopen(path, "r");
     if (!fp) {
         return false;
@@ -166,60 +166,60 @@ static bool hum_emu_values_read_file(const char *path, char *buf, size_t buflen)
     return true;
 }
 
-void hum_emu_values_reload(void) {
-    const char *live = getenv("HUM_EMU_VALUES_LIVE");
+void lego_ghost_hub_values_reload(void) {
+    const char *live = getenv("LEGO_GHOST_HUB_VALUES_LIVE");
     if (live && *live) {
         char buf[512];
-        if (hum_emu_values_read_file(live, buf, sizeof(buf))) {
-            hum_emu_values_parse(buf);
+        if (lego_ghost_hub_values_read_file(live, buf, sizeof(buf))) {
+            lego_ghost_hub_values_parse(buf);
             return;
         }
     }
-    hum_emu_values_parse(getenv("HUM_EMU_VALUES"));
+    lego_ghost_hub_values_parse(getenv("LEGO_GHOST_HUB_VALUES"));
 }
 
-bool hum_emu_value_has(pbio_port_id_t port_id, const char *attr) {
-    hum_emu_values_reload();
+bool lego_ghost_hub_value_has(pbio_port_id_t port_id, const char *attr) {
+    lego_ghost_hub_values_reload();
     int idx = (int)port_id - (int)PBIO_PORT_ID_A;
-    if (idx < 0 || idx >= HUM_EMU_NUM_PORTS || !attr) {
+    if (idx < 0 || idx >= LEGO_GHOST_HUB_NUM_PORTS || !attr) {
         return false;
     }
-    hum_emu_attr_t *slot = hum_emu_attr_slot(idx, attr, false);
+    lego_ghost_hub_attr_t *slot = lego_ghost_hub_attr_slot(idx, attr, false);
     return slot && slot->set;
 }
 
-float hum_emu_value_get(pbio_port_id_t port_id, const char *attr, float default_value) {
-    hum_emu_values_reload();
+float lego_ghost_hub_value_get(pbio_port_id_t port_id, const char *attr, float default_value) {
+    lego_ghost_hub_values_reload();
     int idx = (int)port_id - (int)PBIO_PORT_ID_A;
-    if (idx < 0 || idx >= HUM_EMU_NUM_PORTS || !attr) {
+    if (idx < 0 || idx >= LEGO_GHOST_HUB_NUM_PORTS || !attr) {
         return default_value;
     }
-    hum_emu_attr_t *slot = hum_emu_attr_slot(idx, attr, false);
+    lego_ghost_hub_attr_t *slot = lego_ghost_hub_attr_slot(idx, attr, false);
     if (slot && slot->set && !slot->is_str) {
         return slot->value;
     }
     return default_value;
 }
 
-const char *hum_emu_value_get_str(pbio_port_id_t port_id, const char *attr) {
-    hum_emu_values_reload();
+const char *lego_ghost_hub_value_get_str(pbio_port_id_t port_id, const char *attr) {
+    lego_ghost_hub_values_reload();
     int idx = (int)port_id - (int)PBIO_PORT_ID_A;
-    if (idx < 0 || idx >= HUM_EMU_NUM_PORTS || !attr) {
+    if (idx < 0 || idx >= LEGO_GHOST_HUB_NUM_PORTS || !attr) {
         return NULL;
     }
-    hum_emu_attr_t *slot = hum_emu_attr_slot(idx, attr, false);
+    lego_ghost_hub_attr_t *slot = lego_ghost_hub_attr_slot(idx, attr, false);
     if (slot && slot->set && slot->is_str && slot->str[0]) {
         return slot->str;
     }
     return NULL;
 }
 
-bool hum_emu_color_rgb(const char *name, int16_t rgb[3]) {
+bool lego_ghost_hub_color_rgb(const char *name, int16_t rgb[3]) {
     if (!name || !rgb) {
         return false;
     }
-    char n[HUM_EMU_STR_LEN];
-    hum_emu_normalize_color_token(n, sizeof(n), name);
+    char n[LEGO_GHOST_HUB_STR_LEN];
+    lego_ghost_hub_normalize_color_token(n, sizeof(n), name);
     // Channels are 0..1024 as used by ColorSensor RGB_I
     if (strcmp(n, "WHITE") == 0) {
         rgb[0] = rgb[1] = rgb[2] = 1024;
@@ -265,12 +265,12 @@ bool hum_emu_color_rgb(const char *name, int16_t rgb[3]) {
     return true;
 }
 
-bool hum_emu_color_shsv(const char *name, int16_t shsv[3]) {
+bool lego_ghost_hub_color_shsv(const char *name, int16_t shsv[3]) {
     if (!name || !shsv) {
         return false;
     }
-    char n[HUM_EMU_STR_LEN];
-    hum_emu_normalize_color_token(n, sizeof(n), name);
+    char n[LEGO_GHOST_HUB_STR_LEN];
+    lego_ghost_hub_normalize_color_token(n, sizeof(n), name);
     // SHSV: h degrees, s and v in 0..1000 (sensor scales /10 → 0..100)
     int h = 0, s = 0, v = 0;
     if (strcmp(n, "WHITE") == 0) {
@@ -326,23 +326,23 @@ bool hum_emu_color_shsv(const char *name, int16_t shsv[3]) {
     return true;
 }
 
-#define HUM_EMU_MAX_CTRL 8
+#define LEGO_GHOST_HUB_MAX_CTRL 8
 
 typedef struct {
     const pbio_control_t *control;
     pbio_port_id_t port_id;
     bool set;
-} hum_emu_ctrl_bind_t;
+} lego_ghost_hub_ctrl_bind_t;
 
-static hum_emu_ctrl_bind_t ctrl_binds[HUM_EMU_MAX_CTRL];
+static lego_ghost_hub_ctrl_bind_t ctrl_binds[LEGO_GHOST_HUB_MAX_CTRL];
 
-void hum_emu_bind_control(const pbio_control_t *control, pbio_port_id_t port_id) {
+void lego_ghost_hub_bind_control(const pbio_control_t *control, pbio_port_id_t port_id) {
     if (!control) {
         return;
     }
-    hum_emu_ctrl_bind_t *empty = NULL;
-    for (int i = 0; i < HUM_EMU_MAX_CTRL; i++) {
-        hum_emu_ctrl_bind_t *b = &ctrl_binds[i];
+    lego_ghost_hub_ctrl_bind_t *empty = NULL;
+    for (int i = 0; i < LEGO_GHOST_HUB_MAX_CTRL; i++) {
+        lego_ghost_hub_ctrl_bind_t *b = &ctrl_binds[i];
         if (b->set && b->control == control) {
             b->port_id = port_id;
             return;
@@ -358,12 +358,12 @@ void hum_emu_bind_control(const pbio_control_t *control, pbio_port_id_t port_id)
     }
 }
 
-bool hum_emu_control_port(const pbio_control_t *control, pbio_port_id_t *port_id_out) {
+bool lego_ghost_hub_control_port(const pbio_control_t *control, pbio_port_id_t *port_id_out) {
     if (!control || !port_id_out) {
         return false;
     }
-    for (int i = 0; i < HUM_EMU_MAX_CTRL; i++) {
-        hum_emu_ctrl_bind_t *b = &ctrl_binds[i];
+    for (int i = 0; i < LEGO_GHOST_HUB_MAX_CTRL; i++) {
+        lego_ghost_hub_ctrl_bind_t *b = &ctrl_binds[i];
         if (b->set && b->control == control) {
             *port_id_out = b->port_id;
             return true;

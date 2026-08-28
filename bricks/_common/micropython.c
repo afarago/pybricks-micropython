@@ -434,9 +434,30 @@ void pbsys_main_run_program_cleanup(void) {
     mp_deinit();
 }
 
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+
+// Conservative GC root scanning is unsound on wasm: the setjmp-based register
+// capture (MICROPY_GCREGS_SETJMP) stores nothing scannable, and live pointers
+// held in wasm locals are not memory-addressable, so gc_helper_collect_regs_and_stack()
+// misses roots and gc_collect() frees live objects (heap corruption after the
+// first collection). Emscripten's scanners fix this: emscripten_scan_registers()
+// uses Asyncify to spill all live wasm locals to scannable linear memory, and
+// emscripten_scan_stack() scans the real C shadow-stack range.
+static void gc_scan_func(void *begin, void *end)
+{
+    gc_collect_root((void **)begin, (void **)end - (void **)begin + 1);
+}
+#endif
+
 void gc_collect(void) {
     gc_collect_start();
+#if defined(__EMSCRIPTEN__)
+    emscripten_scan_stack(gc_scan_func);
+    emscripten_scan_registers(gc_scan_func);
+#else
     gc_helper_collect_regs_and_stack();
+#endif
     gc_collect_end();
 }
 

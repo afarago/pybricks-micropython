@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2026 The Pybricks Authors / hum-emu
+// Copyright (c) 2026 The Pybricks Authors / lego-ghost-hub
 //
 // Minimal virtual IMU: no async process (desktop boot has no IRQs to drive
-// busy-wait). Orientation is read from HUM_EMU_IMU via pbio_imu_* overrides.
+// busy-wait). Orientation is read from LEGO_GHOST_HUB_IMU via pbio_imu_* overrides.
 
 #include <pbdrv/config.h>
 
@@ -12,7 +12,7 @@
 
 #include <pbdrv/imu.h>
 
-#include "hum_emu_imu.h"
+#include "lego_ghost_hub_imu.h"
 
 #define VIRTUAL_IMU_SAMPLE_TIME (0.01f)
 #define VIRTUAL_IMU_GYRO_SCALE (0.1f)
@@ -28,7 +28,7 @@ struct _pbdrv_imu_dev_t {
 static pbdrv_imu_dev_t global_imu_dev;
 
 void pbdrv_imu_init(void) {
-    (void)hum_emu_imu_yaw(); // warm the live-file cache
+    (void)lego_ghost_hub_imu_yaw(); // warm the live-file cache
     global_imu_dev.config.sample_time = VIRTUAL_IMU_SAMPLE_TIME;
     global_imu_dev.config.gyro_scale = VIRTUAL_IMU_GYRO_SCALE;
     global_imu_dev.config.accel_scale = VIRTUAL_IMU_ACCEL_SCALE;

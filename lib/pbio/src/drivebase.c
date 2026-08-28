@@ -16,7 +16,7 @@
 #include <pbio/servo.h>
 
 #if PBDRV_CONFIG_IMU_VIRTUAL
-#include "hum_emu_imu.h"
+#include "lego_ghost_hub_imu.h"
 #endif
 
 #if PBIO_CONFIG_NUM_DRIVEBASES > 0
@@ -190,7 +190,7 @@ static pbio_error_t pbio_drivebase_get_state_control(pbio_drivebase_t *db, pbio_
             &db->control_heading.settings, &state_heading->position);
         float rate_deg_s = (float)pbio_control_settings_ctl_to_app(
             &db->control_heading.settings, state_heading->speed);
-        hum_emu_imu_set_odometry(yaw_deg, rate_deg_s);
+        lego_ghost_hub_imu_set_odometry(yaw_deg, rate_deg_s);
     }
     #endif
 

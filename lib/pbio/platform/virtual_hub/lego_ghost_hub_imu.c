@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2026 The Pybricks Authors / hum-emu
+// Copyright (c) 2026 The Pybricks Authors / lego-ghost-hub
 
 #include <ctype.h>
 #include <stdbool.h>
@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "hum_emu_imu.h"
+#include "lego_ghost_hub_imu.h"
 
 static float yaw_deg;
 static float pitch_deg;
@@ -18,7 +18,7 @@ static float yaw_rate_deg_s;
 static char last_source[256];
 static bool have_source;
 
-static bool hum_emu_imu_read_file(const char *path, char *buf, size_t buflen) {
+static bool lego_ghost_hub_imu_read_file(const char *path, char *buf, size_t buflen) {
     FILE *fp = fopen(path, "r");
     if (!fp) {
         return false;
@@ -32,7 +32,7 @@ static bool hum_emu_imu_read_file(const char *path, char *buf, size_t buflen) {
     return true;
 }
 
-static void hum_emu_imu_parse(const char *text) {
+static void lego_ghost_hub_imu_parse(const char *text) {
     if (!text || !*text) {
         return;
     }
@@ -87,16 +87,16 @@ static void hum_emu_imu_parse(const char *text) {
     }
 }
 
-void hum_emu_imu_reload(void) {
+void lego_ghost_hub_imu_reload(void) {
     char buf[256];
     bool got = false;
 
-    const char *live = getenv("HUM_EMU_IMU_LIVE");
+    const char *live = getenv("LEGO_GHOST_HUB_IMU_LIVE");
     if (live && *live) {
-        got = hum_emu_imu_read_file(live, buf, sizeof(buf));
+        got = lego_ghost_hub_imu_read_file(live, buf, sizeof(buf));
     }
     if (!got) {
-        const char *env = getenv("HUM_EMU_IMU");
+        const char *env = getenv("LEGO_GHOST_HUB_IMU");
         if (!env) {
             env = "";
         }
@@ -113,41 +113,41 @@ void hum_emu_imu_reload(void) {
     last_source[sizeof(last_source) - 1] = '\0';
     have_source = true;
     yaw_rate_deg_s = 0.0f;
-    hum_emu_imu_parse(buf);
+    lego_ghost_hub_imu_parse(buf);
 }
 
-float hum_emu_imu_yaw(void) {
-    hum_emu_imu_reload();
+float lego_ghost_hub_imu_yaw(void) {
+    lego_ghost_hub_imu_reload();
     return yaw_deg;
 }
 
-float hum_emu_imu_pitch(void) {
-    hum_emu_imu_reload();
+float lego_ghost_hub_imu_pitch(void) {
+    lego_ghost_hub_imu_reload();
     return pitch_deg;
 }
 
-float hum_emu_imu_roll(void) {
-    hum_emu_imu_reload();
+float lego_ghost_hub_imu_roll(void) {
+    lego_ghost_hub_imu_reload();
     return roll_deg;
 }
 
-float hum_emu_imu_yaw_rate(void) {
-    hum_emu_imu_reload();
+float lego_ghost_hub_imu_yaw_rate(void) {
+    lego_ghost_hub_imu_reload();
     return yaw_rate_deg_s;
 }
 
-void hum_emu_imu_set_odometry(float yaw, float rate_deg_s) {
+void lego_ghost_hub_imu_set_odometry(float yaw, float rate_deg_s) {
     // Ensure initial env/live values are loaded once before odometry takes over.
     if (!have_source) {
-        hum_emu_imu_reload();
+        lego_ghost_hub_imu_reload();
     }
     yaw_deg = yaw;
     yaw_rate_deg_s = rate_deg_s;
 }
 
-void hum_emu_imu_set_yaw(float yaw) {
+void lego_ghost_hub_imu_set_yaw(float yaw) {
     if (!have_source) {
-        hum_emu_imu_reload();
+        lego_ghost_hub_imu_reload();
     }
     yaw_deg = yaw;
     yaw_rate_deg_s = 0.0f;

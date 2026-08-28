@@ -337,7 +337,7 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_iodevices_PUPDevice,
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
 
-#include "hum_emu_ports.h"
+#include "lego_ghost_hub_ports.h"
 
 #define STUB_NUM_MODES  (LUMP_MAX_EXT_MODE + 1)
 #define STUB_NUM_VALUES 8
@@ -361,7 +361,7 @@ static mp_obj_t iodevices_PUPDevice_make_new(const mp_obj_type_t *type, size_t n
     pb_assert(pbio_port_get_port(port_id, &port));
 
     self->port_id = port_id;
-    self->type_id = hum_emu_port_type_id(port_id);
+    self->type_id = lego_ghost_hub_port_type_id(port_id);
     if (self->type_id == 0) {
         pb_assert(PBIO_ERROR_NO_DEV);
     }

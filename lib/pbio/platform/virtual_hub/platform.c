@@ -63,7 +63,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     },
     {
         .port_id = PBIO_PORT_ID_D,
-        .motor_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .motor_driver_index = 3,
         .external_port_index = 3,
         .counter_driver_index = 3,
         .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
@@ -95,7 +95,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
 
 #define INFINITY (1e100)
 
-// type_id is unused: virtualhub takes PUP ids from HUM_EMU_PORTS (see hum_emu_ports.c).
+// type_id is unused: virtualhub takes PUP ids from LEGO_GHOST_HUB_PORTS (see lego_ghost_hub_ports.c).
 // Keep per-port angle/endstop seeds for when a motor is attached via that map.
 const pbdrv_motor_driver_virtual_simulation_platform_data_t
     pbdrv_motor_driver_virtual_simulation_platform_data[PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV] = {

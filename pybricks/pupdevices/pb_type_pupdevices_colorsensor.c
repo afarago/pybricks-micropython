@@ -22,13 +22,13 @@
 #include <pybricks/util_pb/pb_error.h>
 
 #if PYBRICKS_HUB_VIRTUALHUB
-#include "hum_emu_values.h"
+#include "lego_ghost_hub_values.h"
 
-static mp_obj_t hum_emu_color_obj_from_name(const char *name) {
+static mp_obj_t lego_ghost_hub_color_obj_from_name(const char *name) {
     if (!name || !*name) {
         return MP_OBJ_NULL;
     }
-    // Names are already normalized to UPPER by hum_emu_values.
+    // Names are already normalized to UPPER by lego_ghost_hub_values.
     if (strcmp(name, "RED") == 0) {
         return MP_OBJ_FROM_PTR(&pb_Color_RED_obj);
     }
@@ -147,8 +147,8 @@ static void get_hsv_ambient(mp_obj_t self_in, pbio_color_hsv_t *hsv) {
 static mp_obj_t get_hsv_surface_true(mp_obj_t self_in) {
     #if PYBRICKS_HUB_VIRTUALHUB
     pupdevices_ColorSensor_obj_t *self_ovr = MP_OBJ_TO_PTR(self_in);
-    const char *cname = hum_emu_value_get_str(self_ovr->device_base.port_id, "color");
-    mp_obj_t named = hum_emu_color_obj_from_name(cname);
+    const char *cname = lego_ghost_hub_value_get_str(self_ovr->device_base.port_id, "color");
+    mp_obj_t named = lego_ghost_hub_color_obj_from_name(cname);
     if (named != MP_OBJ_NULL) {
         // Return a copy so callers can mutate HSV independently of the constant.
         pb_type_Color_obj_t *color = pb_type_Color_new_empty();
@@ -166,8 +166,8 @@ static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_hsv_surface_true_obj, LEGO_DEV
 static mp_obj_t get_hsv_surface_false(mp_obj_t self_in) {
     #if PYBRICKS_HUB_VIRTUALHUB
     pupdevices_ColorSensor_obj_t *self_ovr = MP_OBJ_TO_PTR(self_in);
-    const char *cname = hum_emu_value_get_str(self_ovr->device_base.port_id, "color");
-    mp_obj_t named = hum_emu_color_obj_from_name(cname);
+    const char *cname = lego_ghost_hub_value_get_str(self_ovr->device_base.port_id, "color");
+    mp_obj_t named = lego_ghost_hub_color_obj_from_name(cname);
     if (named != MP_OBJ_NULL) {
         pb_type_Color_obj_t *color = pb_type_Color_new_empty();
         color->hsv = *pb_type_Color_get_hsv(named);
@@ -184,8 +184,8 @@ static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_hsv_surface_false_obj, LEGO_DE
 static mp_obj_t get_color_surface_true(mp_obj_t self_in) {
     #if PYBRICKS_HUB_VIRTUALHUB
     pupdevices_ColorSensor_obj_t *self_ovr = MP_OBJ_TO_PTR(self_in);
-    const char *cname = hum_emu_value_get_str(self_ovr->device_base.port_id, "color");
-    mp_obj_t named = hum_emu_color_obj_from_name(cname);
+    const char *cname = lego_ghost_hub_value_get_str(self_ovr->device_base.port_id, "color");
+    mp_obj_t named = lego_ghost_hub_color_obj_from_name(cname);
     if (named != MP_OBJ_NULL) {
         return named;
     }
@@ -201,8 +201,8 @@ static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_color_surface_true_obj, LEGO_D
 static mp_obj_t get_color_surface_false(mp_obj_t self_in) {
     #if PYBRICKS_HUB_VIRTUALHUB
     pupdevices_ColorSensor_obj_t *self_ovr = MP_OBJ_TO_PTR(self_in);
-    const char *cname = hum_emu_value_get_str(self_ovr->device_base.port_id, "color");
-    mp_obj_t named = hum_emu_color_obj_from_name(cname);
+    const char *cname = lego_ghost_hub_value_get_str(self_ovr->device_base.port_id, "color");
+    mp_obj_t named = lego_ghost_hub_color_obj_from_name(cname);
     if (named != MP_OBJ_NULL) {
         return named;
     }

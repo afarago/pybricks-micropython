@@ -5,7 +5,8 @@
 #define PBDRV_CONFIG_BATTERY_TEST                           (1)
 
 #define PBDRV_CONFIG_BLOCK_DEVICE                           (1)
-#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE                  (50 * 1024)
+// Match SPIKE Prime / Robot Inventor Hub RAM size (272 KB)
+#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE                  ((256 + 16) * 1024)
 #define PBDRV_CONFIG_BLOCK_DEVICE_TEST                      (1)
 
 // Use Bluetooth simulation locally.
@@ -26,7 +27,7 @@
 
 #define PBDRV_CONFIG_CLOCK                                  (1)
 // Wall clock even when RUN_ON_CI (no Bluetooth). The test clock races
-// motor moves many times faster than real time, which is wrong for hum-emu.
+// motor moves many times faster than real time, which is wrong for lego-ghost-hub.
 #define PBDRV_CONFIG_CLOCK_LINUX                            (1)
 
 #define PBDRV_CONFIG_COUNTER                                (1)
@@ -45,8 +46,8 @@
 #define PBDRV_CONFIG_MOTOR_DRIVER                           (1)
 #define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV                   (6)
 #define PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION        (1)
-// Device types come from HUM_EMU_PORTS (hum-emu), not platform_data.type_id.
-#define PBDRV_CONFIG_HUM_EMU_PORTS                          (1)
+// Device types come from LEGO_GHOST_HUB_PORTS (lego-ghost-hub), not platform_data.type_id.
+#define PBDRV_CONFIG_LEGO_GHOST_HUB_PORTS                          (1)
 
 #define PBDRV_CONFIG_IMU                                    (1)
 #define PBDRV_CONFIG_IMU_VIRTUAL                            (1)
