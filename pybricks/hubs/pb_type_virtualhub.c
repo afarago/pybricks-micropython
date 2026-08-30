@@ -6,6 +6,7 @@
 #if PYBRICKS_PY_HUBS && PYBRICKS_HUB_VIRTUALHUB
 
 #include <pbio/button.h>
+#include <pbio/light_matrix.h>
 #include <pbsys/light.h>
 
 #include "py/misc.h"
@@ -95,7 +96,15 @@ static mp_obj_t hubs_VirtualHub_make_new(const mp_obj_type_t *type, size_t n_arg
     // FIXME: Implement lights.
     // self->light = common_ColorLight_internal_obj_new(pbsys_status_light_main);
     self->screen = pb_type_Image_display_obj_new();
+    #if PYBRICKS_PY_COMMON_LIGHT_MATRIX
+    {
+        pbio_light_matrix_t *light_matrix;
+        pb_assert(pbio_light_matrix_get_dev(0, 5, &light_matrix));
+        self->display = pb_type_LightMatrix_obj_new(light_matrix);
+    }
+    #else
     self->display = self->screen;
+    #endif
     #if PYBRICKS_PY_COMMON_SPEAKER
     self->speaker = mp_call_function_0(MP_OBJ_FROM_PTR(&pb_type_Speaker));
     #endif

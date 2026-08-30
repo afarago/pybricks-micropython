@@ -12,6 +12,7 @@
 #include <pbio/error.h>
 
 #include "led_array_pwm.h"
+#include "led_array_virtual.h"
 #include "led_array.h"
 
 #ifndef PBDRV_CONFIG_LED_ARRAY_NUM_DEV
@@ -22,6 +23,7 @@ static pbdrv_led_array_dev_t pbdrv_led_array_dev[PBDRV_CONFIG_LED_ARRAY_NUM_DEV]
 
 void pbdrv_led_array_init(void) {
     pbdrv_led_array_pwm_init(pbdrv_led_array_dev);
+    pbdrv_led_array_virtual_init(pbdrv_led_array_dev);
 }
 
 /**

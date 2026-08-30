@@ -32,6 +32,11 @@
 
 #define PBDRV_CONFIG_COUNTER                                (1)
 
+#define PBDRV_CONFIG_LED_ARRAY                              (1)
+#define PBDRV_CONFIG_LED_ARRAY_NUM_DEV                      (1)
+#define PBDRV_CONFIG_LED_ARRAY_VIRTUAL                      (1)
+#define PBDRV_CONFIG_LED_ARRAY_VIRTUAL_SIZE                 (5)
+
 #define PBDRV_CONFIG_DISPLAY                                (1)
 #define PBDRV_CONFIG_DISPLAY_VIRTUAL                        (1)
 #define PBDRV_CONFIG_DISPLAY_NUM_COLS                       (178)

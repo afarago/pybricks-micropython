@@ -156,6 +156,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/imu/imu_lsm6ds3tr_c_stm32.c \
 	drv/ioport/ioport.c \
 	drv/led/led_array_pwm.c \
+	drv/led/led_array_virtual.c \
 	drv/led/led_array.c \
 	drv/led/led_core.c \
 	drv/led/led_dual.c \
