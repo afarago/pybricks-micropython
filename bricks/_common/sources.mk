@@ -263,6 +263,7 @@ ifeq ($(PBIO_PLATFORM),virtual_hub)
 PBIO_SRC_C += lib/pbio/platform/virtual_hub/lego_ghost_hub_ports.c
 PBIO_SRC_C += lib/pbio/platform/virtual_hub/lego_ghost_hub_values.c
 PBIO_SRC_C += lib/pbio/platform/virtual_hub/lego_ghost_hub_imu.c
+PBIO_SRC_C += lib/pbio/platform/virtual_hub/lego_ghost_hub_frames.c
 PBIO_SRC_C += lib/pbio/drv/imu/imu_virtual.c
 endif
 

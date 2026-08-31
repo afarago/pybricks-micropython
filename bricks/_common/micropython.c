@@ -230,6 +230,12 @@ static void execute_rom_mpy_in_context(mp_module_context_t *module_context, mpy_
 static void run_user_program(void) {
     int ret = 0;
 
+    #if LEGO_GHOST_HUB_FRAME_TRACKING
+    extern void lego_ghost_hub_frames_reset(void);
+    extern void lego_ghost_hub_frames_init(void);
+    lego_ghost_hub_frames_reset();
+    #endif
+
     nlr_buf_t nlr;
     nlr.ret_val = NULL;
 
@@ -239,11 +245,19 @@ static void run_user_program(void) {
         // Run the script while letting CTRL-C interrupt it.
         mp_hal_set_interrupt_char(CHAR_CTRL_C);
 
+        #if LEGO_GHOST_HUB_FRAME_TRACKING
+        lego_ghost_hub_frames_init();
+        #endif
+
         // Main program runs in __main__ module which is already initialized.
         mp_module_context_t main_context = {
             .module = mp_module___main__
         };
         execute_rom_mpy_in_context(&main_context, mpy_first);
+
+        #if LEGO_GHOST_HUB_FRAME_TRACKING
+        lego_ghost_hub_frames_reset();
+        #endif
 
         mp_hal_set_interrupt_char(-1);
 
@@ -252,6 +266,9 @@ static void run_user_program(void) {
 
         nlr_pop();
     } else {
+        #if LEGO_GHOST_HUB_FRAME_TRACKING
+        lego_ghost_hub_frames_reset();
+        #endif
         mp_hal_set_interrupt_char(-1);
 
         // if vm abort

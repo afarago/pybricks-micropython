@@ -178,7 +178,7 @@ ifneq (,$(findstring emcc,$(CC)))
 CFLAGS += -Wno-error -std=gnu11
 LDFLAGS += -s WASM=1 -s MODULARIZE=1 -s EXPORT_NAME=PybricksWasm -s EXPORT_ES6=1 -s ASYNCIFY=1 -s ALLOW_MEMORY_GROWTH=1 \
            -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","getValue","setValue","FS","callMain"]' \
-           -s EXPORTED_FUNCTIONS='["_main","_free","_malloc"]' \
+           -s EXPORTED_FUNCTIONS='["_main","_free","_malloc","_lego_ghost_hub_values_set","_lego_ghost_hub_stdin_write","_lego_ghost_hub_ports_set","_pbdrv_motor_simulation_get_angle","_pbdrv_motor_simulation_get_speed","_pbdrv_motor_simulation_set_angle","_pbsys_main_stop_program"]' \
            -s STACK_SIZE=1048576 -s INITIAL_MEMORY=16777216
 else ifeq ($(UNAME_S),Linux)
 LDFLAGS += -Wl,-Map=$@.map,--cref -Wl,--gc-sections

@@ -73,6 +73,8 @@
 #define PYBRICKS_OPT_EXTRA_LEVEL2               (1)
 #define PYBRICKS_OPT_CUSTOM_IMPORT              (1)
 #define PYBRICKS_OPT_NATIVE_MOD                 (0)
+#define MICROPY_PY_SYS_SETTRACE                 (1)
+#define LEGO_GHOST_HUB_FRAME_TRACKING           (1)
 
 #define PYBRICKS_VM_HOOK_LOOP_EXTRA \
     do { \

@@ -12,6 +12,10 @@
 
 #define MICROPY_BANNER_NAME_AND_VERSION "Pybricks MicroPython " MICROPY_GIT_TAG " on " MICROPY_BUILD_DATE
 
+#ifndef LEGO_GHOST_HUB_FRAME_TRACKING
+#define LEGO_GHOST_HUB_FRAME_TRACKING           (0)
+#endif
+
 #define MICROPY_ENABLE_COMPILER                 (PYBRICKS_OPT_COMPILER)
 
 // Enabled modules
